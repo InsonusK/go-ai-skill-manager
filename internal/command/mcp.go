@@ -14,7 +14,7 @@ import (
 )
 
 // DefaultMCPServerName is the server's name in .mcp.json.
-const DefaultMCPServerName = "ai-skills"
+const DefaultMCPServerName = "ai-skill-manager"
 
 // MCP is the mcp command: Action "" serves the feedback tools over stdio,
 // install/uninstall edit .mcp.json. ServerName is the server's key in .mcp.json;
@@ -28,8 +28,8 @@ type MCP struct {
 
 // mcpActions: name, usage after "aism mcp", summary.
 var mcpActions = [][3]string{
-	{"install", "install [-c FILE] [--name ai-skills] [--replace]", "Add this server to .mcp.json next to the config (Claude Code);\n-c, when given, is passed to the server too"},
-	{"uninstall", "uninstall [-c FILE] [--name ai-skills]", "Remove it from .mcp.json"},
+	{"install", "install [-c FILE] [--name ai-skill-manager] [--replace]", "Add this server to .mcp.json next to the config (Claude Code);\n-c, when given, is passed to the server too"},
+	{"uninstall", "uninstall [-c FILE] [--name ai-skill-manager]", "Remove it from .mcp.json"},
 }
 
 func (m *MCP) Name() string { return "mcp" }
@@ -72,10 +72,11 @@ func (m *MCP) Help(global []common.Flag) string {
 	if i < 0 {
 		h := common.Help{
 			Usage: []string{"aism mcp [-c FILE]", "aism mcp <action> [options]"},
-			Description: "Without an action: serve the tools feedback_draft and feedback_submit over\n" +
-				"stdio. The config is read anew on every call, from CLAUDE_PROJECT_DIR when\n" +
-				"it is set; stdout belongs to the protocol.",
+			Description: "Without an action: serve the tools below over stdio. The config is read\n" +
+				"anew on every call, from CLAUDE_PROJECT_DIR when it is set; stdout belongs\n" +
+				"to the protocol.",
 			EntriesTitle: "Actions",
+			Lists:        []common.HelpList{{Title: "Tools the server gives the agent", Entries: mcpTools()}},
 			Flags:        m.flags(),
 			Global:       global,
 			Footer:       "Run \"aism mcp <action> --help\" for an action's options.",
@@ -91,6 +92,38 @@ func (m *MCP) Help(global []common.Flag) string {
 		Flags:       m.flags(),
 		Global:      global,
 	}.String()
+}
+
+// mcpTools: name and description of each tool of the server, the
+// description wrapped for the help.
+func mcpTools() [][2]string {
+	var tools [][2]string
+	for _, t := range mcpserver.Tools() {
+		tools = append(tools, [2]string{t.Name, wrap(t.Description, 58)})
+	}
+	return tools
+}
+
+// wrap breaks text into lines of at most width characters, at spaces.
+//
+// Пример: wrap("aa bb cc", 5) -> "aa bb\ncc"
+func wrap(text string, width int) string {
+	var b strings.Builder
+	line := 0
+	for _, word := range strings.Fields(text) {
+		switch {
+		case line == 0:
+		case line+1+len(word) > width:
+			b.WriteByte('\n')
+			line = 0
+		default:
+			b.WriteByte(' ')
+			line++
+		}
+		b.WriteString(word)
+		line += len(word)
+	}
+	return b.String()
 }
 
 func (m *MCP) Run(ctx context.Context, app *common.App, cwd string) int {

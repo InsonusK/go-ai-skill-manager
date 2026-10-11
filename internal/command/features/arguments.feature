@@ -96,7 +96,7 @@ Feature: CLI argument contract
    """
   Then parsed command "mcp" options are
    """
-   {"Action":"","ServerName":"ai-skills","Replace":false,"Source":{"Config":"custom.yaml","Type":"","Path":"","Subpaths":null}}
+   {"Action":"","ServerName":"ai-skill-manager","Replace":false,"Source":{"Config":"custom.yaml","Type":"","Path":"","Subpaths":null}}
    """
 
  Scenario: mcp install takes the server's name and --replace

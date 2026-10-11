@@ -33,7 +33,11 @@ aism --version
 ```
 
 Оба скрипта сами находят последний GitHub Release и проверяют SHA-256 перед
-установкой. Другую папку можно задать переменной окружения `AISM_INSTALL_DIR`.
+установкой. Теми же командами `aism` обновляется: если установлена последняя
+версия, скрипт ничего не делает; иначе перед заменой файла он останавливает
+процессы, запущенные из этого файла (MCP-сервер `aism mcp`, который держит
+клиент), — после обновления переподключите сервер (в Claude Code — `/mcp`)
+или перезапустите клиент. Другую папку можно задать переменной окружения `AISM_INSTALL_DIR`.
 Исходники скриптов: [Linux](scripts/install.sh), [Windows](scripts/install.ps1).
 Для macOS скачайте соответствующий исполняемый файл со страницы Releases.
 
@@ -191,10 +195,10 @@ gh auth status
 
 # 2. MCP-сервер для Claude Code в этом проекте (пишет .mcp.json — закоммитьте)
 aism mcp install
-claude mcp list          # ai-skills: aism mcp - ✔ Connected
+claude mcp list          # ai-skill-manager: aism mcp - ✔ Connected
 ```
 
-При первом запуске `claude` в проекте одобрите сервер `ai-skills`. Дальше
+При первом запуске `claude` в проекте одобрите сервер `ai-skill-manager`. Дальше
 попросите агента написать отзыв о скиле: он вызовет `feedback_draft`, затем
 `feedback_submit`, и Claude Code покажет итоговый issue с галочкой
 «Open this issue» — без неё ничего не отправится.

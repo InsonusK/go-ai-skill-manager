@@ -33,7 +33,7 @@ type mcpEntry struct {
 //
 // Пример (aism в PATH, -c cfg.yaml) -> .mcp.json:
 //
-//	{"mcpServers": {"ai-skills": {"command": "aism", "args": ["mcp", "-c", "cfg.yaml"]}}}
+//	{"mcpServers": {"ai-skill-manager": {"command": "aism", "args": ["mcp", "-c", "cfg.yaml"]}}}
 func (m *MCP) install(app *common.App, cwd string) int {
 	file, err := m.configFile(app, cwd)
 	if err != nil {

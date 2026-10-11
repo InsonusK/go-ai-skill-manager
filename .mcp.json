@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "ai-skills": {
+    "ai-skill-manager": {
       "command": "aism",
       "args": [
         "mcp"
