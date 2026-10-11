@@ -34,6 +34,15 @@ if (-not $tag.StartsWith('v') -or $tag.Length -eq 1) {
 }
 
 $version = $tag.Substring(1)
+$destination = Join-Path $InstallDir 'aism.exe'
+if (Test-Path -LiteralPath $destination) {
+    $installed = $null
+    try { $installed = & $destination --version 2>$null | Select-Object -First 1 } catch { }
+    if ("$installed".Trim() -eq $version) {
+        Write-Host "ai-skill-manager $version is already installed: $destination"
+        return
+    }
+}
 $assetName = "ai-skill-manager_${version}_windows_amd64.exe"
 $checksumsName = "ai-skill-manager_${version}_checksums.txt"
 $binaryAsset = @($release.assets) | Where-Object { $_.name -eq $assetName } | Select-Object -First 1
@@ -70,8 +79,19 @@ try {
         throw "Checksum verification failed for $assetName"
     }
 
+    # Windows locks a running executable: stop the processes started from
+    # the installed file (an MCP server a client keeps running), and only
+    # those. Another aism elsewhere on the machine is left alone.
+    $running = @(Get-Process -Name aism -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -ieq $destination })
+    if ($running.Count -gt 0) {
+        Write-Host "Stopping running aism processes: $($running.Id -join ', ')"
+        $running | Stop-Process -Force
+        $running | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue
+        Write-Host 'An MCP client that used aism has lost its server: reconnect it (Claude Code: /mcp) or restart the client.'
+    }
+
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-    $destination = Join-Path $InstallDir 'aism.exe'
     Copy-Item -Force -LiteralPath $binaryPath -Destination $destination
 
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')

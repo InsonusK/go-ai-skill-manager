@@ -64,25 +64,48 @@ const (
 	confirmField   = "send"
 )
 
+// ToolInfo is a tool as the help shows it to the user.
+type ToolInfo struct {
+	Name, Description string
+}
+
+// Tools lists the server's tools in the order the client sees them, from
+// the definitions NewServer registers: the help can't drift from the server.
+func Tools() []ToolInfo {
+	return []ToolInfo{
+		{Name: draftSpec().Name, Description: draftSpec().Description},
+		{Name: submitSpec().Name, Description: submitSpec().Description},
+	}
+}
+
+func draftSpec() *mcp.Tool {
+	no := false
+	return &mcp.Tool{
+		Name: "feedback_draft",
+		Description: "Write a feedback about a skill (bug or improvement) as a draft file in the project. Sends nothing. " +
+			"The skill's source repository is found from the skill's folder. Show the user the returned file, then call feedback_submit.",
+		Annotations: &mcp.ToolAnnotations{Title: "Draft skill feedback", DestructiveHint: &no, OpenWorldHint: &no},
+	}
+}
+
+func submitSpec() *mcp.Tool {
+	no, yes := false, true
+	return &mcp.Tool{
+		Name: "feedback_submit",
+		Description: "Ask the user to confirm a feedback draft and, only if the user confirms, open it as an issue in the skill's source repository. " +
+			"The user sees the full issue in a dialog. If the client can't show one, the user sends it from a terminal.",
+		Annotations: &mcp.ToolAnnotations{Title: "Send skill feedback after the user confirms", DestructiveHint: &no, OpenWorldHint: &yes},
+	}
+}
+
 // NewServer makes the MCP server with the feedback tools.
 func NewServer(open Open, version string) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{Name: "ai-skill-manager", Title: "AI Skill Manager", Version: version}, &mcp.ServerOptions{
 		Instructions: "Report a bug or suggest an improvement to a skill you use, as an issue in the repository the skill was synced from. " +
 			"Call feedback_draft, then feedback_submit: the user reads the issue and decides whether to send it. Never put the user's code or data in the issue.",
 	})
-	no, yes := false, true
-	mcp.AddTool(server, &mcp.Tool{
-		Name: "feedback_draft",
-		Description: "Write a feedback about a skill (bug or improvement) as a draft file in the project. Sends nothing. " +
-			"The skill's source repository is found from the skill's folder. Show the user the returned file, then call feedback_submit.",
-		Annotations: &mcp.ToolAnnotations{Title: "Draft skill feedback", DestructiveHint: &no, OpenWorldHint: &no},
-	}, draftTool(open))
-	mcp.AddTool(server, &mcp.Tool{
-		Name: "feedback_submit",
-		Description: "Ask the user to confirm a feedback draft and, only if the user confirms, open it as an issue in the skill's source repository. " +
-			"The user sees the full issue in a dialog. If the client can't show one, the user sends it from a terminal.",
-		Annotations: &mcp.ToolAnnotations{Title: "Send skill feedback after the user confirms", DestructiveHint: &no, OpenWorldHint: &yes},
-	}, submitTool(open))
+	mcp.AddTool(server, draftSpec(), draftTool(open))
+	mcp.AddTool(server, submitSpec(), submitTool(open))
 	return server
 }
 

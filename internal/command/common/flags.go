@@ -121,9 +121,17 @@ type Help struct {
 	// Entries: name and summary of each action (or command).
 	EntriesTitle string
 	Entries      [][2]string
-	Flags        []Flag
-	Global       []Flag
-	Footer       string
+	// Lists: further titled name/summary lists, after Entries.
+	Lists  []HelpList
+	Flags  []Flag
+	Global []Flag
+	Footer string
+}
+
+// HelpList is a titled list of names with their summaries.
+type HelpList struct {
+	Title   string
+	Entries [][2]string
 }
 
 // String renders the help.
@@ -149,13 +157,16 @@ func (h Help) String() string {
 	if h.Description != "" {
 		b.WriteString("\n" + h.Description + "\n")
 	}
-	if len(h.Entries) > 0 {
-		b.WriteString("\n" + h.EntriesTitle + ":\n")
+	for _, list := range append([]HelpList{{Title: h.EntriesTitle, Entries: h.Entries}}, h.Lists...) {
+		if len(list.Entries) == 0 {
+			continue
+		}
+		b.WriteString("\n" + list.Title + ":\n")
 		width := 0
-		for _, e := range h.Entries {
+		for _, e := range list.Entries {
 			width = max(width, len(e[0]))
 		}
-		for _, e := range h.Entries {
+		for _, e := range list.Entries {
 			writeColumns(&b, e[0], e[1], width)
 		}
 	}

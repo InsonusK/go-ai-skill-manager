@@ -614,7 +614,7 @@ master или запустить workflow вручную.
    задан. stdout — только протокол. Документация: раздел MCP в
    `docs/feedback.md` (`.mcp.json`, `claude mcp add`, не ставить
    авто-ответ хуком `Elicitation`).
-5. ✅ `aism mcp install|uninstall [-c] [--name ai-skills] [--replace]` —
+5. ✅ `aism mcp install|uninstall [-c] [--name ai-skill-manager] [--replace]` —
    только Claude Code: запись в `.mcp.json` рядом с конфигом (корень
    проекта). `--name`/`--replace` — только установке, серверу не
    передаются; `-c` с именем не `ai-skills.yaml` попадает в `args`.
@@ -626,6 +626,17 @@ master или запустить workflow вручную.
    файл не трогается. `CLAUDE_PROJECT_DIR` подменяет cwd только для
    запуска сервера. Другие клиенты (VS Code, Cursor, Codex) — позже,
    флагом `--client`.
+   Имя сервера по умолчанию — `ai-skill-manager`
+   (`DefaultMCPServerName`; запись под старым именем `ai-skills` сама не
+   переименовывается). `aism mcp -h` печатает инструменты сервера из
+   `mcpserver.Tools()` — тех же определений, что регистрирует `NewServer`.
+- Обновление при подключённом MCP: `scripts/install.sh`/`install.ps1`
+  сначала сверяют `aism --version` с последним Release (совпало — выход,
+  ничего не трогают), иначе перед заменой файла останавливают процессы,
+  запущенные **из устанавливаемого файла** (Linux: `/proc/*/exe`; Windows:
+  `Get-Process aism` по `Path`), чужой `aism` в другой папке не трогают.
+  Клиент после этого переподключается вручную (`/mcp`). `install.ps1` на
+  Windows не прогонялся (в devcontainer нет PowerShell).
 
 ## Идеи оптимизации (не внедрены, ждут решения)
 

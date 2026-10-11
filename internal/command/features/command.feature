@@ -228,6 +228,25 @@ Feature: Command line: sync and validate
    | mcp install --help       | mcp install [-c FILE]              | --replace                   | --dry-run      |
    | mcp uninstall --help     | mcp uninstall [-c FILE]            | --name NAME                 | --replace      |
 
+ Scenario: aism mcp --help lists the tools the server gives the agent
+  Given CLI project
+   """
+   {}
+   """
+  When I run arguments "mcp --help"
+  Then exit code is "0"
+  And stdout contains "Tools the server gives the agent:\n  feedback_draft   Write a feedback about a skill"
+  And stdout contains "\n  feedback_submit  Ask the user to confirm a feedback draft"
+
+ Scenario: An mcp action's help doesn't list the server's tools
+  Given CLI project
+   """
+   {}
+   """
+  When I run arguments "mcp install --help"
+  Then exit code is "0"
+  And stdout doesn't contain "feedback_draft"
+
  Scenario: Whitespace GitHub path is a configuration error
   Given CLI project
    """

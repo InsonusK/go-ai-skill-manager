@@ -109,7 +109,7 @@ aism feedback decline ID
 `aism mcp install [-c FILE] [--name NAME] [--replace]` добавляет сервер в
 `.mcp.json` рядом с конфигурацией (Claude Code): `command` — имя из `PATH`
 или абсолютный путь с предупреждением, `args` — `["mcp"]`, плюс `-c` для
-конфига не с именем `ai-skills.yaml`. `--name` (default `ai-skills`) — ключ
+конфига не с именем `ai-skills.yaml`. `--name` (default `ai-skill-manager`) — ключ
 в `mcpServers`, `--replace` — перезаписать другую запись под этим именем.
 `aism mcp uninstall [--name NAME]` убирает запись. Остальное содержимое
 `.mcp.json` сохраняется.

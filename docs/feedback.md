@@ -91,8 +91,8 @@ aism mcp install
 ```
 
 ```text
-Added MCP server ai-skills to /project/.mcp.json: aism mcp
-Commit .mcp.json. Claude Code asks to approve the server ai-skills the first time you run claude in this project.
+Added MCP server ai-skill-manager to /project/.mcp.json: aism mcp
+Commit .mcp.json. Claude Code asks to approve the server ai-skill-manager the first time you run claude in this project.
 ```
 
 Команда добавляет в `.mcp.json` (файл MCP-серверов проекта для Claude Code)
@@ -101,7 +101,7 @@ Commit .mcp.json. Claude Code asks to approve the server ai-skills the first tim
 ```json
 {
   "mcpServers": {
-    "ai-skills": {
+    "ai-skill-manager": {
       "command": "aism",
       "args": ["mcp"]
     }
@@ -121,14 +121,14 @@ Commit .mcp.json. Claude Code asks to approve the server ai-skills the first tim
   добавится `"-c", "cfg.yaml"`, чтобы сервер читал тот же конфиг. Claude
   Code читает `.mcp.json` в папке, где запущен `claude`, поэтому конфиг
   держите в корне проекта.
-- `--name NAME` — другое имя сервера (по умолчанию `ai-skills`). Под этим
+- `--name NAME` — другое имя сервера (по умолчанию `ai-skill-manager`). Под этим
   именем уже другая запись — `install` откажет и покажет обе; `--replace`
   перезапишет.
 - `aism mcp uninstall [--name NAME]` — убрать запись.
 
 Без `aism mcp install` — то же командой Claude Code:
-`claude mcp add --scope project ai-skills -- aism mcp`, или только для
-себя, без файла в репозитории: `claude mcp add ai-skills -- aism mcp`.
+`claude mcp add --scope project ai-skill-manager -- aism mcp`, или только для
+себя, без файла в репозитории: `claude mcp add ai-skill-manager -- aism mcp`.
 
 - Сервер из `.mcp.json` Claude Code запускает только после вашего
   одобрения: при первом запуске `claude` в проекте он спросит, доверять ли
@@ -151,10 +151,10 @@ Commit .mcp.json. Claude Code asks to approve the server ai-skills the first tim
 ### 5. Проверьте
 
 ```sh
-claude mcp list           # ai-skills: aism mcp - ✔ Connected
+claude mcp list           # ai-skill-manager: aism mcp - ✔ Connected
 ```
 
-В сессии Claude Code команда `/mcp` показывает сервер `ai-skills` с
+В сессии Claude Code команда `/mcp` показывает сервер `ai-skill-manager` с
 инструментами `feedback_draft` и `feedback_submit`. Попросите агента,
 например: «напиши отзыв о скиле guide: якорь #setup никуда не ведёт».
 Агент создаст черновик в `.ai-skills/feedback/` и вызовет
