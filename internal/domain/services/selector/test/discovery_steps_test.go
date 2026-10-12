@@ -41,7 +41,7 @@ func (p selectProvider) Acquire(ctx context.Context, key model.SourceKey, option
 // manifest, "type path", is one source.
 type lineReader struct{}
 
-func (lineReader) ReadSourceManifest(manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues) {
+func (lineReader) ReadSourceManifest(ctx context.Context, manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues) {
 	var specs []model.SourceSpec
 	for _, line := range strings.Fields(strings.ReplaceAll(string(manifest.Content), " ", ":")) {
 		kind, p, _ := strings.Cut(line, ":")

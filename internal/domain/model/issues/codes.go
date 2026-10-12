@@ -34,6 +34,8 @@ const (
 	CodeDuplicateName   Code = "duplicate-name"
 	CodeWhenToUseBoth   Code = "when-to-use-both"
 	CodePatternConflict Code = "pattern-conflict"
+	CodeInvalidManifest Code = "invalid-manifest"
+	CodeLocalSubSource  Code = "local-sub-source"
 
 	CodeInvalidLink       Code = "invalid-link"
 	CodeMissingLinkTarget Code = "missing-link-target"
@@ -74,6 +76,8 @@ var ids = map[Code]string{
 	CodeDuplicateName:   "E208",
 	CodeWhenToUseBoth:   "W209",
 	CodePatternConflict: "E210",
+	CodeInvalidManifest: "E211",
+	CodeLocalSubSource:  "E212",
 
 	CodeInvalidLink:       "E301",
 	CodeMissingLinkTarget: "E302",

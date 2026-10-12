@@ -30,20 +30,9 @@ type Overrides struct {
 func Parse(data []byte) (Config, error) {
 	req := model.Request{RemoveOrphans: true}
 	warnings := &deprecations{}
-	var node yaml.Node
-	if err := yaml.Unmarshal(data, &node); err != nil {
-		return Config{}, fmt.Errorf("config: %w", err)
-	}
-	if len(node.Content) == 0 {
-		return Config{}, fmt.Errorf("config must be a mapping")
-	}
-	literalTags(&node)
-	var root map[string]any
-	if err := node.Decode(&root); err != nil {
-		return Config{}, fmt.Errorf("config: %w", err)
-	}
-	if root == nil {
-		return Config{}, fmt.Errorf("config must be a mapping")
+	root, node, err := decodeRoot(data, "config")
+	if err != nil {
+		return Config{}, err
 	}
 	settings, err := mapping(root["settings"], "settings")
 	if err != nil {
@@ -82,25 +71,53 @@ func Parse(data []byte) (Config, error) {
 	if req.Targets, err = parseTargets(target, targetNode, targetSetting, warnings); err != nil {
 		return Config{}, err
 	}
-	sources := root["sources"]
+	if req.Sources, err = parseSources(root["sources"], warnings); err != nil {
+		return Config{}, err
+	}
+	return Config{Request: req, Warnings: warnings.list}, nil
+}
+
+// decodeRoot reads data as a YAML (or JSON) mapping; what names the file
+// in errors, e.g. "config".
+func decodeRoot(data []byte, what string) (map[string]any, *yaml.Node, error) {
+	var node yaml.Node
+	if err := yaml.Unmarshal(data, &node); err != nil {
+		return nil, nil, fmt.Errorf("%s: %w", what, err)
+	}
+	if len(node.Content) == 0 {
+		return nil, nil, fmt.Errorf("%s must be a mapping", what)
+	}
+	literalTags(&node)
+	var root map[string]any
+	if err := node.Decode(&root); err != nil {
+		return nil, nil, fmt.Errorf("%s: %w", what, err)
+	}
+	if root == nil {
+		return nil, nil, fmt.Errorf("%s must be a mapping", what)
+	}
+	return root, &node, nil
+}
+
+// parseSources reads the "sources" list; a missing one is empty.
+func parseSources(sources any, warnings *deprecations) ([]model.SourceSpec, error) {
 	if sources == nil {
 		sources = []any{}
 	}
 	list, ok := sources.([]any)
 	if !ok {
-		return Config{}, fmt.Errorf("sources must be a list")
+		return nil, fmt.Errorf("sources must be a list")
 	}
-	req.Sources = []model.SourceSpec{}
+	out := []model.SourceSpec{}
 	for i, raw := range list {
 		m, e := mapping(raw, "source")
 		if e != nil {
-			return Config{}, e
+			return nil, e
 		}
 		s, e := parseSource(m, fmt.Sprintf("sources[%d]", i), warnings)
 		if e != nil {
-			return Config{}, e
+			return nil, e
 		}
-		req.Sources = append(req.Sources, s)
+		out = append(out, s)
 	}
-	return Config{Request: req, Warnings: warnings.list}, nil
+	return out, nil
 }

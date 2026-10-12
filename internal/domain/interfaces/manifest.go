@@ -1,6 +1,8 @@
 package interfaces
 
 import (
+	"context"
+
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 )
@@ -13,5 +15,5 @@ import (
 // The domain owns the port because it doesn't know the configuration
 // format.
 type SourceManifestReader interface {
-	ReadSourceManifest(manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues)
+	ReadSourceManifest(ctx context.Context, manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues)
 }

@@ -48,7 +48,7 @@ func (d SubSource) Select(ctx context.Context, e sourcing.Entry) (sourcing.ScanR
 	if err != nil {
 		return sourcing.ScanResult{}, issues.SkillIssues{{Code: issues.CodeSourceRead, Source: source, File: e.Path, Message: err.Error()}}
 	}
-	specs, found := d.Reader.ReadSourceManifest(model.SourceManifest{Source: e.Repo.Key, Path: e.Path, RepoDirOsPath: e.Repo.RootPath, Content: content})
+	specs, found := d.Reader.ReadSourceManifest(ctx, model.SourceManifest{Source: e.Repo.Key, Path: e.Path, RepoDirOsPath: e.Repo.RootPath, Content: content})
 	if len(found) > 0 {
 		problems := make(issues.SkillIssues, len(found))
 		for i, f := range found {

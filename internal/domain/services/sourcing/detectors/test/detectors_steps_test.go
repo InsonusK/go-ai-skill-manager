@@ -55,7 +55,7 @@ func (p treeProvider) Acquire(ctx context.Context, key model.SourceKey, options 
 // it was given.
 type lineReader struct{ given *[]model.SourceManifest }
 
-func (r lineReader) ReadSourceManifest(manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues) {
+func (r lineReader) ReadSourceManifest(ctx context.Context, manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues) {
 	*r.given = append(*r.given, manifest)
 	var specs []model.SourceSpec
 	var problems issues.ConfigIssues
