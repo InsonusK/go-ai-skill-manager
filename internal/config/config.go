@@ -71,7 +71,11 @@ func Parse(data []byte) (Config, error) {
 	if req.Targets, err = parseTargets(target, targetNode, targetSetting, warnings); err != nil {
 		return Config{}, err
 	}
-	if req.Sources, err = parseSources(root["sources"], warnings); err != nil {
+	nested, err := boolean(settings, "nested_sources", true)
+	if err != nil {
+		return Config{}, err
+	}
+	if req.Sources, err = parseSources(root["sources"], nested, warnings); err != nil {
 		return Config{}, err
 	}
 	return Config{Request: req, Warnings: warnings.list}, nil
@@ -98,8 +102,9 @@ func decodeRoot(data []byte, what string) (map[string]any, *yaml.Node, error) {
 	return root, &node, nil
 }
 
-// parseSources reads the "sources" list; a missing one is empty.
-func parseSources(sources any, warnings *deprecations) ([]model.SourceSpec, error) {
+// parseSources reads the "sources" list; a missing one is empty. nested
+// is the "nested_sources" of a source that doesn't set it.
+func parseSources(sources any, nested bool, warnings *deprecations) ([]model.SourceSpec, error) {
 	if sources == nil {
 		sources = []any{}
 	}
@@ -113,7 +118,7 @@ func parseSources(sources any, warnings *deprecations) ([]model.SourceSpec, erro
 		if e != nil {
 			return nil, e
 		}
-		s, e := parseSource(m, fmt.Sprintf("sources[%d]", i), warnings)
+		s, e := parseSource(m, fmt.Sprintf("sources[%d]", i), nested, warnings)
 		if e != nil {
 			return nil, e
 		}

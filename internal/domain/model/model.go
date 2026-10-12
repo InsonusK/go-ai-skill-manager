@@ -19,6 +19,9 @@ type SourceSpec struct {
 	// are loaded and copied with the skill but never checked (no
 	// nested-skill, no link checks). Adds to Request.ExcludeFromChecks.
 	ExcludeFromChecks []string
+	// SkipNestedSources leaves the source manifests found in this source
+	// unread: the sources it names itself are not loaded.
+	SkipNestedSources bool
 }
 
 type AcquisitionOptions struct {

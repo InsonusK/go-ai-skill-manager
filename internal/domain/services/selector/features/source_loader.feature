@@ -3,8 +3,9 @@ Feature: SourceLoader loads the configured sources and the sources they name the
 
  # A source names further sources in source manifests ("skill-sources.yaml"
  # outside its skills' folders). Here every line of a manifest is one
- # source: "repository[@tree] [subpath,subpath] [!folder,folder]" -- the
- # "!" list is its exclude_from_checks; the configured sources are written
+ # source: "repository[@tree] [subpath,subpath] [!folder,folder] [-nested]"
+ # -- the "!" list is its exclude_from_checks, "-nested" is nested_sources
+ # false; the configured sources are written
  # the same way, separated by ";". "skill:NAME" is the file of a skill
  # named NAME. Loaded skills are written "repository[@tree]:skill".
 
@@ -261,6 +262,33 @@ Feature: SourceLoader loads the configured sources and the sources they name the
    """
   When I load the sources "one"
   Then the loaded skills are "two:a,two:b"
+
+ @category/boundary
+ Scenario Outline: A source set to skip nested sources has its manifests left unread
+  Given repository "one" holds
+   """
+   {"a/SKILL.md":"skill:a","skill-sources.yaml":"<listed>"}
+   """
+  And repository "two" holds
+   """
+   {"b/SKILL.md":"skill:b","skill-sources.yaml":"three"}
+   """
+  And repository "three" holds
+   """
+   {"c/SKILL.md":"skill:c"}
+   """
+  When I load the sources "<configured>"
+  Then the loaded skills are "<skills>"
+  And the load issues are
+   """
+   []
+   """
+  Examples:
+   | configured          | listed      | skills              |
+   | one                 | two         | one:a,two:b,three:c |
+   | one -nested         | two         | one:a               |
+   | one                 | two -nested | one:a,two:b         |
+   | one -nested;two     |             | one:a,two:b,three:c |
 
  @category/boundary
  Scenario: Without a scanner reading manifests only the configured sources are loaded

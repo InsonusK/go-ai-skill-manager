@@ -38,6 +38,18 @@ Feature: Reading a source manifest: the sources a source names itself
    """
 
  @category/happy
+ Scenario: A listed source reads its own manifests unless it says nested_sources false
+  Given a source manifest "skill-sources.yaml" in github source "https://github.com/o/parent.git"
+   """
+   sources:
+     - {path: https://github.com/o/one.git, type: github}
+     - {path: https://github.com/o/two.git, type: github, nested_sources: false}
+     - {path: https://github.com/o/three.git, type: github, nested_sources: true}
+   """
+  When I read the source manifest
+  Then the manifest sources read nested sources "true,false,true"
+
+ @category/happy
  Scenario Outline: In a local source, a local source's path is taken from the manifest's own folder
   Given a source manifest "<manifest>" in local source "/work/repo"
    """

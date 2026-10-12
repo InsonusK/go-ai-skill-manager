@@ -229,3 +229,39 @@ Feature: Effective synchronization configuration
    """
    [["deprecated-setting","sources[0].name","removed setting, it has no effect: a skill keeps the name from its frontmatter"]]
    """
+
+ # nested_sources: whether the source manifests found in a source are read
+ # (the sources it names itself are loaded).
+
+ @category/happy
+ Scenario Outline: nested_sources of a source is its own, else the one in settings, else on
+  Given configuration
+   """
+   sources:
+     - path: plain
+     - path: off
+       nested_sources: false
+     - path: on
+       nested_sources: true
+   settings: <settings>
+   """
+  When I resolve configuration
+  Then the sources read nested sources "<nested>"
+  Examples:
+   | settings                | nested           |
+   | {}                      | true,false,true  |
+   | {nested_sources: true}  | true,false,true  |
+   | {nested_sources: false} | false,false,true |
+
+ @category/negative
+ Scenario Outline: nested_sources must be a boolean
+  Given configuration
+   """
+   <config>
+   """
+  When I resolve configuration
+  Then the config error contains "nested_sources must be a boolean"
+  Examples:
+   | config                                          |
+   | sources: []\nsettings: {nested_sources: "no"}   |
+   | sources: [{path: a, nested_sources: [x]}]       |

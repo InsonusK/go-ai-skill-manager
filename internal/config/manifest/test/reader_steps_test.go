@@ -3,6 +3,7 @@ package manifest_test
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/InsonusK/go-ai-skill-manager/internal/config/manifest"
@@ -57,6 +58,13 @@ func initialize(sc *godog.ScenarioContext) {
 			return err
 		}
 		return testsupport.Equal(len(specs), 0)
+	})
+	sc.Step(`^the manifest sources read nested sources "([^"]*)"$`, func(ctx context.Context, want string) error {
+		flags := []string{}
+		for _, s := range specs {
+			flags = append(flags, strconv.FormatBool(!s.SkipNestedSources))
+		}
+		return testsupport.Equal(strings.Join(flags, ","), want)
 	})
 	sc.Step(`^the manifest is refused as "([^"]*)" with "(.*)"$`, func(ctx context.Context, code, text string) error {
 		text = strings.ReplaceAll(text, `\"`, `"`)

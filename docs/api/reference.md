@@ -128,6 +128,7 @@ sources:
     subpath: [skills/go]
     tags: ["stack/go & !deprecated"]
     exclude_from_checks: [demo]
+    nested_sources: true
 target:
   default:
     path: .agents/skills
@@ -139,6 +140,7 @@ settings:
   dry_run: false
   remove_orphans: true
   add_relations: true
+  nested_sources: true
   validation:
     exclude_from_checks: [examples, templates]
 ```
@@ -153,6 +155,7 @@ settings:
 | `subpath` | GitHub: `skills`; local: корень | Строка или список; отсутствующий путь — проблема `missing-subpath`, путь за пределы источника — `unsafe-subpath` |
 | `tags` | без фильтра | Строка или список выражений; список объединяется AND. **Пока не поддерживается**: источник с `tags` — ошибка конфигурации `unsupported-tags` |
 | `exclude_from_checks` | нет | Папки первого уровня скилов этого источника, исключённые из проверок; дополняют `settings.validation.exclude_from_checks` |
+| `nested_sources` | как `settings.nested_sources` | Читать ли манифесты `skill-sources.yaml` этого источника, см. [Вложенные источники](#вложенные-источники) |
 
 Папки из `exclude_from_checks` **загружаются и копируются вместе со скилом**,
 но не проверяются: ни на вложенные скилы, ни на битые ссылки. Обычно там
@@ -182,11 +185,77 @@ Legacy-форма `settings.target` принимается только при �
 `link-adapter` принимается с warning и ничего не меняет. Неизвестный адаптер
 вызывает ошибку.
 
-Defaults: `dry_run=false`, `remove_orphans=true`, `add_relations=false`.
+Defaults: `dry_run=false`, `remove_orphans=true`, `add_relations=false`,
+`nested_sources=true`.
 По умолчанию `temp_dir` пуст, поэтому используется системный временный каталог. Относительный `temp_dir` разрешается от каталога с `ai-skills.yaml`; указанный каталог должен уже существовать и быть доступен для записи.
 Одноимённые скилы — всегда проблема `duplicate-name`; устаревший
 `settings.on_conflict` принимается с warning и ничего не меняет.
 Пересекающиеся каталоги целей — проблема `target-overlap`.
+
+## Вложенные источники
+
+Источник может сам назвать другие источники. Для этого в его репозитории
+лежит **манифест** — файл `skill-sources.yaml` или
+`<набор>.skill-sources.yaml` (только `.yaml`):
+
+```yaml
+sources:
+  - type: github
+    path: https://github.com/InsonusK/some_repo.git
+    tree: master
+    subpath: [docs/skills]
+```
+
+Где ищутся манифесты:
+
+- под выбранными `subpath` источника, на любой глубине, тем же обходом, что
+  ищет скилы;
+- только **вне папок скилов**: файл `skill-sources.yaml` внутри скила —
+  обычный файл скила, он копируется и ничего не подключает;
+- конфиг проекта (`ai-skills.yaml`) манифестом не считается.
+
+Что можно в манифесте:
+
+- только ключ `sources`; любой другой ключ верхнего уровня (`settings`,
+  `target`) и отсутствие `sources` — проблема `invalid-manifest`;
+- поля источника и их умолчания — как в конфиге (таблица выше), включая
+  `nested_sources`. Устаревшие поля (`name`, `skip_folder`) в манифесте —
+  ошибка, а не warning;
+- источники проверяются теми же правилами, что в конфиге (`unsafe-subpath`,
+  `unsupported-tags`, `duplicate-source`); проблема указывает настройку
+  внутри манифеста, например `sources[1].subpath[0]`;
+- `type: local` разрешён только в манифесте, который сам лежит в
+  local-источнике; путь считается от папки манифеста. В манифесте
+  скачанного источника это проблема `local-sub-source`: чужой репозиторий не
+  должен заставлять копировать файлы с вашей машины. Помните, что `type` по
+  умолчанию — `local`: в манифесте на GitHub его нужно писать явно.
+
+Любая проблема в манифесте — ни один источник из него не загружается, а
+`sync` останавливается до записи, как при любой другой проблеме.
+
+Как загружаются названные источники:
+
+- после источников конфига, по уровням: сначала всё названное источниками
+  конфига, потом названное теми, и так далее;
+- каждый `subpath` источника загружается один раз, сколько бы манифестов его
+  ни называли; источники, называющие друг друга, не зацикливаются;
+- один репозиторий (`type` + `path`) с другим `tree`, чем уже известный из
+  конфига или из ранее прочитанного манифеста, — проблема
+  `conflicting-tree` на манифесте. Два `tree` одного репозитория дали бы
+  каждый скил дважды;
+- `exclude_from_checks` названного источника — глобальный список плюс его
+  собственный. Если у репозитория список уже есть (он есть в конфиге или
+  назван более ранним манифестом), действует первый;
+- скилы, догруженные по ссылкам (`add_relations`), манифесты не читают.
+
+Отключение: `settings.nested_sources: false` — для всех источников конфига,
+`nested_sources: false` у источника — для него (значение источника важнее
+глобального). Источник, названный в манифесте, читает свои манифесты, если в
+его записи не сказано `nested_sources: false`.
+
+В маркере `.ai-skills-managed` у скила записан его собственный источник, так
+что `aism feedback` отправит отзыв в репозиторий, из которого скил пришёл на
+самом деле.
 
 ## Несколько наборов скилов
 
@@ -276,6 +345,8 @@ YAML frontmatter должен содержать `name`: lowercase буквы, �
 - конфиг: `unsupported-tags`, `invalid-tags`, `unsafe-subpath`,
   `duplicate-source`, `conflicting-exclude`, `target-overlap`;
 - источник: `source-acquire`, `missing-subpath`;
+- манифест вложенных источников: `invalid-manifest`, `local-sub-source`,
+  `conflicting-tree`;
 - скил: `invalid-name`, `invalid-skill`, `pattern-conflict`, `nested-skill`,
   `duplicate-name`;
 - ссылки: `missing-link-target`, `missing-anchor`, `path-escape`,

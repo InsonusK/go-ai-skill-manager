@@ -27,8 +27,8 @@ type SyncService struct {
 	// Manifests reads the source manifests found in the sources; nil
 	// leaves them unread (see FetchAndValidateSkills).
 	Manifests interfaces.SourceManifestReader
-	State   interfaces.StateReader
-	Writer  interfaces.PlanWriter
+	State     interfaces.StateReader
+	Writer    interfaces.PlanWriter
 }
 
 // SyncResult is what a sync did, or, for a dry run, would do.

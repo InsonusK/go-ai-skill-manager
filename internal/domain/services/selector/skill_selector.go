@@ -25,8 +25,11 @@ type SkillSelector struct {
 	Scanner *sourcing.Scanner
 }
 
-func (d SkillSelector) scanner() *sourcing.Scanner {
-	if d.Scanner != nil {
+// scanner is what a source is searched with: Scanner, or the catalog's
+// own -- skills only -- when there is none or the source's manifests are
+// to be skipped.
+func (d SkillSelector) scanner(skipNestedSources bool) *sourcing.Scanner {
+	if d.Scanner != nil && !skipNestedSources {
 		return d.Scanner
 	}
 	return d.SkillCatalog.Scanner
@@ -52,6 +55,11 @@ func (d SkillSelector) scanner() *sourcing.Scanner {
 //     обходится заново, one берётся уже загруженный
 //   - LoadPath(".") ещё раз -> скилы [one, two] из каталога, источников нет
 func (d SkillSelector) LoadPath(ctx context.Context, key model.SourceKey, p string) (sourcing.ScanResult, error) {
+	return d.loadPath(ctx, d.scanner(false), key, p)
+}
+
+// loadPath is LoadPath searching with scanner.
+func (d SkillSelector) loadPath(ctx context.Context, scanner *sourcing.Scanner, key model.SourceKey, p string) (sourcing.ScanResult, error) {
 	skills, err := d.SkillCatalog.GetByPath(ctx, key, p)
 	if !errors.Is(err, entity.ErrSkillNotCached) {
 		return sourcing.ScanResult{Skills: skills}, err
@@ -60,7 +68,7 @@ func (d SkillSelector) LoadPath(ctx context.Context, key model.SourceKey, p stri
 	if err != nil {
 		return sourcing.ScanResult{}, err
 	}
-	found, problems := d.scanner().Scan(ctx, repo, start)
+	found, problems := scanner.Scan(ctx, repo, start)
 	d.SkillCatalog.Add(repo.Key, start, found.Skills, len(problems) == 0)
 	if len(problems) > 0 {
 		return found, problems
@@ -72,7 +80,8 @@ func (d SkillSelector) LoadPath(ctx context.Context, key model.SourceKey, p stri
 // of its subpaths (defaulting to ".") it calls LoadPath with spec's
 // SourceKey. Select returns the skills, each once, and the sources the
 // source manifests under those subpaths list, as LoadPath returned them
-// (a manifest under two overlapping subpaths gives its sources twice).
+// (a manifest under two overlapping subpaths gives its sources twice) --
+// none with spec.SkipNestedSources: the manifests are then not read.
 //
 // spec.Tags are not applied yet: selecting by tags is postponed (see
 // AGENTS.md), every skill under the subpaths is selected.
@@ -100,8 +109,9 @@ func (d SkillSelector) Select(ctx context.Context, spec model.SourceSpec) (sourc
 	if len(paths) == 0 {
 		paths = []string{"."}
 	}
+	scanner := d.scanner(spec.SkipNestedSources)
 	for _, p := range paths {
-		found, err := d.LoadPath(ctx, spec.Key(), p)
+		found, err := d.loadPath(ctx, scanner, spec.Key(), p)
 		if err != nil {
 			list := asIssues(err, p)
 			for _, i := range list {

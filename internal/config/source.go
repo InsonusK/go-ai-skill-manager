@@ -7,8 +7,9 @@ import (
 )
 
 // parseSource reads one source; setting is where it is in the
-// configuration, e.g. "sources[1]".
-func parseSource(m map[string]any, setting string, warnings *deprecations) (model.SourceSpec, error) {
+// configuration, e.g. "sources[1]"; nested is what "nested_sources" is
+// when the source doesn't set it.
+func parseSource(m map[string]any, setting string, nested bool, warnings *deprecations) (model.SourceSpec, error) {
 	s := model.SourceSpec{}
 	var err error
 	if s.Type, err = stringValue(m, "type", "local"); err != nil {
@@ -46,5 +47,9 @@ func parseSource(m map[string]any, setting string, warnings *deprecations) (mode
 	if s.ExcludeFromChecks, err = sourceExcludeFromChecks(m, s.Path, setting, warnings); err != nil {
 		return s, err
 	}
+	if nested, err = boolean(m, "nested_sources", nested); err != nil {
+		return s, err
+	}
+	s.SkipNestedSources = !nested
 	return s, nil
 }

@@ -35,14 +35,17 @@ func (p loaderRepositories) Acquire(ctx context.Context, key model.SourceKey, op
 	return &entity.Repository{Key: key, FS: tree}, nil
 }
 
-// loaderSpec reads "repository[@tree][ subpath,subpath][ !folder,folder]"
-// as a local source; the "!" list is its exclude_from_checks.
+// loaderSpec reads "repository[@tree][ subpath,subpath][ !folder,folder]
+// [ -nested]" as a local source; the "!" list is its exclude_from_checks,
+// "-nested" its SkipNestedSources.
 func loaderSpec(line string) model.SourceSpec {
 	fields := strings.Fields(line)
 	spec := model.SourceSpec{Type: "local"}
 	spec.Path, spec.Tree, _ = strings.Cut(fields[0], "@")
 	for _, f := range fields[1:] {
-		if folders, ok := strings.CutPrefix(f, "!"); ok {
+		if f == "-nested" {
+			spec.SkipNestedSources = true
+		} else if folders, ok := strings.CutPrefix(f, "!"); ok {
 			spec.ExcludeFromChecks = strings.Split(folders, ",")
 		} else {
 			spec.Subpaths = strings.Split(f, ",")

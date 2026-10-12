@@ -8,6 +8,7 @@ import (
 	"github.com/InsonusK/go-ai-skill-manager/tools/testsupport"
 	"github.com/cucumber/godog"
 	"log/slog"
+	"strconv"
 	"strings"
 )
 
@@ -16,6 +17,7 @@ func initialize(sc *godog.ScenarioContext) {
 	var actual map[string]any
 	var failure error
 	var warnings [][]string
+	var nested string
 	var logs bytes.Buffer
 	sc.Before(func(ctx context.Context, s *godog.Scenario) (context.Context, error) {
 		logs.Reset()
@@ -47,6 +49,11 @@ func initialize(sc *godog.ScenarioContext) {
 			return nil
 		}
 		sources := []any{}
+		flags := []string{}
+		for _, s := range req.Sources {
+			flags = append(flags, strconv.FormatBool(!s.SkipNestedSources))
+		}
+		nested = strings.Join(flags, ",")
 		for _, s := range req.Sources {
 			sources = append(sources, map[string]any{"type": s.Type, "path": s.Path, "subpaths": s.Subpaths, "tags": s.Tags, "exclude": s.ExcludeFromChecks})
 		}
@@ -56,6 +63,12 @@ func initialize(sc *godog.ScenarioContext) {
 		}
 		actual = map[string]any{"sources": sources, "targets": targets, "tempDir": req.TempDir, "dry": req.DryRun, "orphans": req.RemoveOrphans, "relations": req.AddRelations, "exclude": req.ExcludeFromChecks}
 		return nil
+	})
+	sc.Step(`^the sources read nested sources "([^"]*)"$`, func(ctx context.Context, want string) error {
+		if failure != nil {
+			return failure
+		}
+		return testsupport.Equal(nested, want)
 	})
 	sc.Step(`^the configuration is$`, func(ctx context.Context, d *godog.DocString) error {
 		if failure != nil {

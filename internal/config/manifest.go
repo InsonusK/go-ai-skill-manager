@@ -15,6 +15,9 @@ import (
 // is refused, and so is a missing "sources". Like Parse it only checks
 // the shape; what the sources mean is checked by config/validator.
 //
+// A source of a manifest reads its own manifests unless it says
+// "nested_sources: false".
+//
 // A manifest is a new format, so the settings Parse still reads with a
 // "deprecated-setting" warning are errors here.
 //
@@ -45,7 +48,7 @@ func ParseSourceManifest(data []byte) ([]model.SourceSpec, error) {
 		return nil, fmt.Errorf("a source manifest must hold \"sources\"")
 	}
 	warnings := &deprecations{}
-	specs, err := parseSources(root["sources"], warnings)
+	specs, err := parseSources(root["sources"], true, warnings)
 	if err != nil {
 		return nil, err
 	}
