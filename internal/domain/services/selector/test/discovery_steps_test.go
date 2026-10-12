@@ -37,7 +37,22 @@ func (p selectProvider) Acquire(ctx context.Context, key model.SourceKey, option
 	return &entity.Repository{Key: key, FS: p.tree}, nil
 }
 
+// lineReader is a fake interfaces.SourceManifestReader: every line of a
+// manifest, "type path", is one source.
+type lineReader struct{}
+
+func (lineReader) ReadSourceManifest(manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues) {
+	var specs []model.SourceSpec
+	for _, line := range strings.Fields(strings.ReplaceAll(string(manifest.Content), " ", ":")) {
+		kind, p, _ := strings.Cut(line, ":")
+		specs = append(specs, model.SourceSpec{Type: kind, Path: p})
+	}
+	return specs, nil
+}
+
 func initialize(sc *godog.ScenarioContext) {
+	var readManifests bool
+	var sources []string
 	var tree fstest.MapFS
 	var acquireCalls int
 	var names []string
@@ -54,6 +69,7 @@ func initialize(sc *godog.ScenarioContext) {
 			return err
 		}
 		canceled = false
+		readManifests = false
 		acquireFailure = ""
 		acquireCalls = 0
 		tree = fstest.MapFS{}
@@ -62,6 +78,10 @@ func initialize(sc *godog.ScenarioContext) {
 		}
 		testsupport.Log("files=%v", files)
 		return nil
+	})
+	sc.Step(`^source manifests are read$`, func(ctx context.Context) error { readManifests = true; return nil })
+	sc.Step(`^the selected sources are "([^"]*)"$`, func(ctx context.Context, want string) error {
+		return testsupport.Equal(strings.Join(sources, ","), want)
 	})
 	sc.Step(`^discovery is canceled$`, func(ctx context.Context) error { canceled = true; return nil })
 	sc.Step(`^the source provider fails with "([^"]*)"$`, func(ctx context.Context, msg string) error {
@@ -92,13 +112,21 @@ func initialize(sc *godog.ScenarioContext) {
 				testsupport.Log("panic=%s", panicked)
 			}
 		}()
-		skills, list := (skill_selector.SkillSelector{SkillCatalog: catalog}).Select(ctx, spec)
+		selector := skill_selector.SkillSelector{SkillCatalog: catalog}
+		if readManifests {
+			selector.Scanner = detectors.MustScanner(catalog, detectors.SubSource{Reader: lineReader{}})
+		}
+		selected, list := selector.Select(ctx, spec)
+		sources = []string{}
+		for _, s := range selected.Sources {
+			sources = append(sources, s.Key().String())
+		}
 		problems, failure = list, nil
 		if len(list) > 0 {
 			failure = list
 		}
 		names = []string{}
-		for _, s := range skills {
+		for _, s := range selected.Skills {
 			names = append(names, s.Name)
 		}
 		return nil

@@ -101,11 +101,15 @@
 - `services/sourcing`: `Manager` (acquire по `SourceKey`, кеш, `TempDir`
   задаётся в `NewManager`), `SkillCatalog`, `Scanner` + `Detector` (см.
   ниже).
-- `services/selector`: `SkillSelector{SkillCatalog}` — наполняет каталог.
-  `LoadPath(ctx, key, p)`: `catalog.GetByPath` → промах → `Acquire` →
-  `catalog.Scanner.Scan` → `catalog.Add`. `Select(ctx, spec) ([]*Skill,
-  issues.SkillIssues)` — `LoadPath` по `spec.Subpaths` (по умолчанию
-  `"."`). **Теги пока не применяются**
+- `services/selector`: `SkillSelector{SkillCatalog, Scanner}` — наполняет
+  каталог. `LoadPath(ctx, key, p) (ScanResult, error)`:
+  `catalog.GetByPath` → промах → `Acquire` → `Scanner.Scan` →
+  `catalog.Add` (каталог запоминает только скилы: ответ из кэша —
+  без `Sources`, их вернул вызов, который обходил путь). `Select(ctx,
+  spec) (ScanResult, issues.SkillIssues)` — `LoadPath` по `spec.Subpaths`
+  (по умолчанию `"."`); скилы по одному разу, источники — как нашлись
+  (манифест под двумя пересекающимися subpath даёт их дважды, повторы
+  убирает очередь обработчика). **Теги пока не применяются**
   (см. «Отложено: фильтр по тегам»). Проблема не
   останавливает остальные subpath, кроме `source-acquire` и отмены
   контекста (`canceled`) — они прекращают источник. У каждой проблемы
@@ -175,8 +179,9 @@
   `Scan(ctx, repo, start) (ScanResult, issues.SkillIssues)`; `Probe` — то
   же для одной записи, без спуска (им ищет вверх `FetchByPathUp`). Ничего
   не запоминает.
-- `ScanResult{Skills}` — найденное по видам, типизированно (не `any`);
-  новый вид объекта = новое поле.
+- `ScanResult{Skills, Sources}` — найденное по видам, типизированно (не
+  `any`); новый вид объекта = новое поле. `Sources` — источники из
+  манифестов.
 - `Detector{Name, IsSelected(Entry), Select(ctx, Entry) (ScanResult,
   issues), IsValid(ctx, ScanResult) issues}`; `Entry{Repo, Path, IsDir,
   Children}` — записи папки уже прочитаны обходчиком. На каждую запись:
@@ -193,8 +198,18 @@
   `pattern-conflict`, потому что в выбранную папку обход не заходит и
   `FlatSkill` этот файл не увидит). `detectors.MustScanner(catalog,
   extra...)` — обходчик со всеми форматами скилов.
-- Каталогу обходчик задаётся полем `SkillCatalog.Scanner` (пакет
-  `detectors` импортирует `sourcing`, не наоборот); без него
+- `detectors.SubSource{Reader}` (`sub-source`): файл-манифест
+  (`model.IsSourceManifest`) → читает файл, отдаёт `model.SourceManifest{
+  Source, Path, RepoDirOsPath, Content}` порту
+  `interfaces.SourceManifestReader` → `ScanResult.Sources`. Проблемы
+  читателя (`issues.ConfigIssues`) становятся `SkillIssue` на файле
+  манифеста, `Setting` — в начале сообщения; манифест с проблемой не даёт
+  ни одного источника. `IsValid` пуст: проверяет читатель.
+- Каталогу обходчик задаётся полем `SkillCatalog.Scanner` — **только
+  распознаватели скилов** (иначе ссылка на файл манифеста заставила бы
+  `FetchByPathUp` его читать). Обходчик с `SubSource` — отдельный, поле
+  `SkillSelector.Scanner` (nil — обходчик каталога).
+- Сам каталог обходчик не создаёт: пакет `detectors` импортирует `sourcing`, не наоборот; без обходчика
   `FetchByPathUp` — panic.
 - Имя `Selector` занято (`SkillSelector` выбирает по конфигу), поэтому
   `Detector`/`Scanner`.
@@ -826,8 +841,10 @@ master или запустить workflow вручную.
    удалены), `LoadPath` в `SkillSelector`, код `pattern-conflict` (E210).
    Поведение то же, кроме кода конфликта форматов: был `invalid-skill` с
    текстом `pattern-conflict`, стал `pattern-conflict`.
-2. Распознаватель манифестов (`model.IsSourceManifest`) + порт чтения;
-   `Select` отдаёт найденные источники.
+2. ✅ `detectors.SubSource` + порт `interfaces.SourceManifestReader`,
+   `ScanResult.Sources`, `Select` отдаёт найденные источники. В
+   обработчике распознаватель ещё **не подключён** (нет настоящего
+   читателя).
 3. Разбор манифеста в `config`, новые коды, сценарии валидатора.
 4. Очередь в `FetchAndValidateSkills`: транзитивность, циклы, объединение
    subpath, ошибка на разный `tree`.

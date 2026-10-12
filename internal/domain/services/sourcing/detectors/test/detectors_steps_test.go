@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"path"
 	"strings"
 	"testing/fstest"
 
@@ -28,15 +29,46 @@ type countingFS struct {
 	opens *int
 }
 
+// Open opens a file; one named "unreadable..." opens but can't be read.
 func (f countingFS) Open(name string) (fs.File, error) {
 	*f.opens++
-	return f.files.Open(name)
+	file, err := f.files.Open(name)
+	if err == nil && strings.HasPrefix(path.Base(name), "unreadable") {
+		return unreadableFile{file}, nil
+	}
+	return file, err
 }
+
+type unreadableFile struct{ fs.File }
+
+func (unreadableFile) Read([]byte) (int, error) { return 0, errors.New("disk failure") }
 
 type treeProvider struct{ fs fs.FS }
 
 func (p treeProvider) Acquire(ctx context.Context, key model.SourceKey, options model.AcquisitionOptions) (*entity.Repository, error) {
-	return &entity.Repository{Key: key, FS: p.fs}, nil
+	return &entity.Repository{Key: key, RootPath: "/repos/" + key.Path, FS: p.fs}, nil
+}
+
+// lineReader is a fake interfaces.SourceManifestReader. Every line of a
+// manifest is one source, "source TYPE PATH", or one problem, "problem
+// CODE SETTING MESSAGE" (SETTING "-" for none). It remembers the manifests
+// it was given.
+type lineReader struct{ given *[]model.SourceManifest }
+
+func (r lineReader) ReadSourceManifest(manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues) {
+	*r.given = append(*r.given, manifest)
+	var specs []model.SourceSpec
+	var problems issues.ConfigIssues
+	for _, line := range strings.Split(string(manifest.Content), "\n") {
+		f := strings.SplitN(line, " ", 4)
+		switch {
+		case len(f) == 3 && f[0] == "source":
+			specs = append(specs, model.SourceSpec{Type: f[1], Path: f[2]})
+		case len(f) == 4 && f[0] == "problem":
+			problems = append(problems, issues.ConfigIssue{Code: issues.Code(f[1]), Setting: strings.TrimPrefix(f[2], "-"), Message: f[3]})
+		}
+	}
+	return specs, problems
 }
 
 func initialize(sc *godog.ScenarioContext) {
@@ -46,6 +78,10 @@ func initialize(sc *godog.ScenarioContext) {
 	var found sourcing.ScanResult
 	var problems issues.SkillIssues
 	var loaded map[string]*entity.Skill
+	var given []model.SourceManifest
+	every := func() []sourcing.Detector {
+		return append(detectors.Skills(catalog), detectors.SubSource{Reader: lineReader{given: &given}})
+	}
 
 	// a source tree: JSON {path: content}; content "skill:NAME" is the
 	// file of a skill named NAME.
@@ -65,7 +101,7 @@ func initialize(sc *godog.ScenarioContext) {
 		files := countingFS{files: tree, opens: &opens}
 		catalog = &sourcing.SkillCatalog{Manager: sourcing.NewManager(map[string]interfaces.SourceProvider{"local": treeProvider{fs: files}}, "")}
 		catalog.Scanner = detectors.MustScanner(catalog)
-		found, problems, loaded = sourcing.ScanResult{}, nil, map[string]*entity.Skill{}
+		found, problems, loaded, given = sourcing.ScanResult{}, nil, map[string]*entity.Skill{}, nil
 		var err error
 		repo, err = catalog.Manager.Get(ctx, repoKey)
 		testsupport.Log("files=%v", raw)
@@ -95,7 +131,7 @@ func initialize(sc *godog.ScenarioContext) {
 		return nil
 	}
 	sc.Step(`^I scan "([^"]*)" with detector "([^"]*)"$`, func(ctx context.Context, start, name string) error {
-		for _, d := range detectors.Skills(catalog) {
+		for _, d := range every() {
 			if d.Name() == name {
 				return scan(ctx, start, d)
 			}
@@ -104,6 +140,25 @@ func initialize(sc *godog.ScenarioContext) {
 	})
 	sc.Step(`^I scan "([^"]*)" with the skill detectors$`, func(ctx context.Context, start string) error {
 		return scan(ctx, start, detectors.Skills(catalog)...)
+	})
+	sc.Step(`^I scan "([^"]*)" with every detector$`, func(ctx context.Context, start string) error {
+		return scan(ctx, start, every()...)
+	})
+	// the scan finds sources: "type:path", comma-separated.
+	sc.Step(`^the scan finds sources "([^"]*)"$`, func(ctx context.Context, want string) error {
+		got := []string{}
+		for _, s := range found.Sources {
+			got = append(got, s.Key().String())
+		}
+		return testsupport.Equal(strings.Join(got, ","), want)
+	})
+	// the reader was given: JSON list of {source, path, repo_dir, content}.
+	sc.Step(`^the manifest reader was given$`, func(ctx context.Context, d *godog.DocString) error {
+		got := []map[string]string{}
+		for _, m := range given {
+			got = append(got, map[string]string{"source": m.Source.String(), "path": m.Path, "repo_dir": m.RepoDirOsPath, "content": string(m.Content)})
+		}
+		return testsupport.JSON(got, d)
 	})
 	// the scan finds: "name@location:format", comma-separated.
 	sc.Step(`^the scan finds "([^"]*)"$`, func(ctx context.Context, want string) error {
@@ -122,12 +177,12 @@ func initialize(sc *godog.ScenarioContext) {
 		}
 		return testsupport.Equal(strings.Join(got, ","), want)
 	})
-	// the scan issue is: JSON {code, source, skill, skill_path, file, message}.
-	sc.Step(`^the scan issue is$`, func(ctx context.Context, d *godog.DocString) error {
-		if len(problems) != 1 {
-			return fmt.Errorf("%d issues, want 1: %v", len(problems), problems)
+	// the scan issue N is: JSON {code, source, skill, skill_path, file, message}.
+	sc.Step(`^the scan issue (\d+) is$`, func(ctx context.Context, n int, d *godog.DocString) error {
+		if n < 1 || n > len(problems) {
+			return fmt.Errorf("%d issues, no issue %d: %v", len(problems), n, problems)
 		}
-		i := problems[0]
+		i := problems[n-1]
 		return testsupport.JSON(map[string]string{"code": string(i.Code), "source": i.Source, "skill": i.Skill, "skill_path": i.SkillPath, "file": i.File, "message": i.Message}, d)
 	})
 	sc.Step(`^the found skill "([^"]*)" is the loaded one$`, func(ctx context.Context, name string) error {

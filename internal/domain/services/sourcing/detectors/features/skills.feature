@@ -57,7 +57,7 @@ Feature: The skill detectors together: one skill per place, each checked
    """
   When I scan "." with the skill detectors
   Then the scan finds ""
-  And the scan issue is
+  And the scan issue 1 is
    """
    {"code":"pattern-conflict","source":"local:repo","skill":"","skill_path":"","file":"a.skill",
     "message":"selected by several detectors: agent-skill, human-skill"}
@@ -102,7 +102,7 @@ Feature: The skill detectors together: one skill per place, each checked
    {"a/SKILL.md":"skill:one","a/b/SKILL.md":"skill:two"}
    """
   When I scan "." with the skill detectors
-  Then the scan issue is
+  Then the scan issue 1 is
    """
    {"code":"nested-skill","source":"local:repo","skill":"one","skill_path":"a","file":"b/SKILL.md",
     "message":"nested-skill: b/SKILL.md"}

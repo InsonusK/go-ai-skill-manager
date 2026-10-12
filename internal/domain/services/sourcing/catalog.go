@@ -25,8 +25,8 @@ func isNotExist(err error) bool { return errors.Is(err, fs.ErrNotExist) }
 type SkillCatalog struct {
 	Manager *Manager
 	// Scanner recognizes a skill by its file or folder (see the detectors
-	// package). FetchByPathUp needs it; a catalog only answering from its
-	// cache doesn't.
+	// package); it is given the skill detectors only. FetchByPathUp needs
+	// it; a catalog only answering from its cache doesn't.
 	Scanner *Scanner
 	// AddRelations selects what TryGetOrFetchByPathUp does on a cache miss: true fetches the skill, false fails with
 	// entity.ErrSkillNotCached -- mirrors the add_relations setting.

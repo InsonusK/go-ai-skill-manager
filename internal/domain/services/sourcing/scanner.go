@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/entity"
+	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 )
 
@@ -42,11 +43,15 @@ type Detector interface {
 // ScanResult is what a search found, by kind, each in the order found.
 type ScanResult struct {
 	Skills []*entity.Skill
+	// Sources are the sources the source manifests list, a manifest's
+	// sources together, in the order written.
+	Sources []model.SourceSpec
 }
 
 // add appends what other holds.
 func (r *ScanResult) add(other ScanResult) {
 	r.Skills = append(r.Skills, other.Skills...)
+	r.Sources = append(r.Sources, other.Sources...)
 }
 
 // Scanner walks a repository's folders once, for all of its detectors.

@@ -131,3 +131,39 @@ Feature: Select the skills one source contributes
   When I select from subpaths "." with tags "go"
   Then discovered names are "one" and discovery error contains ""
   And the catalog holds "one"
+
+ # Sources a source names itself: source manifests, see detectors.SubSource.
+ # The manifest reader here is a test one: a line "type path" is a source.
+
+ @category/happy
+ Scenario: Sources listed by manifests under the subpaths are returned next to the skills
+  Given a source tree
+   """
+   {"a/SKILL.md":"---\nname: one\n---\n","a/skill-sources.yaml":"inside a-skill",
+    "b/c/SKILL.md":"---\nname: two\n---\n","b/team.skill-sources.yaml":"github team\nlocal near",
+    "skill-sources.yaml":"github root"}
+   """
+  And source manifests are read
+  When I select from subpaths "a,b" with tags ""
+  Then discovered names are "one,two" and discovery error contains ""
+  And the selected sources are "github:team,local:near"
+
+ @category/boundary
+ Scenario: A manifest under two overlapping subpaths gives its sources twice
+  Given a source tree
+   """
+   {"x/skill-sources.yaml":"github deep","skill-sources.yaml":"github root"}
+   """
+  And source manifests are read
+  When I select from subpaths ".,x" with tags ""
+  Then the selected sources are "github:root,github:deep,github:deep"
+
+ @category/boundary
+ Scenario: Without a scanner reading manifests no source is returned
+  Given a source tree
+   """
+   {"a/SKILL.md":"---\nname: one\n---\n","skill-sources.yaml":"github root"}
+   """
+  When I select from subpaths "." with tags ""
+  Then discovered names are "one" and discovery error contains ""
+  And the selected sources are ""

@@ -13,48 +13,66 @@ import (
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
 )
 
-// SkillSelector fills SkillCatalog with the skills a source selects: the
-// catalog's Scanner searches the source's folders, the catalog remembers
-// what it found.
+// SkillSelector fills SkillCatalog with the skills a source selects: a
+// Scanner searches the source's folders, the catalog remembers the skills
+// it found.
 type SkillSelector struct {
 	SkillCatalog *sourcing.SkillCatalog
+	// Scanner is what the folders are searched with; nil means the
+	// catalog's own, which finds skills only. One with more detectors (see
+	// detectors.SubSource) finds more than skills -- the catalog still
+	// remembers the skills alone, the rest is only returned.
+	Scanner *sourcing.Scanner
 }
 
-// LoadPath returns the skills at or below path p of source key, loading
-// them into the catalog first when it has no complete answer for p yet
+func (d SkillSelector) scanner() *sourcing.Scanner {
+	if d.Scanner != nil {
+		return d.Scanner
+	}
+	return d.SkillCatalog.Scanner
+}
+
+// LoadPath returns what is at or below path p of source key, loading the
+// skills into the catalog first when it has no complete answer for p yet
 // (catalog.GetByPath): the Repository is acquired (lazily, cached by the
-// catalog's Manager), p is resolved inside it, the catalog's Scanner
-// searches from it down, and the catalog remembers the skills found (catalog.Add). Invalid
-// candidates are returned as issues.SkillIssues next to the valid skills;
-// such a search is not complete, so a repeated call searches -- and
+// catalog's Manager), p is resolved inside it, the Scanner searches from
+// it down, and the catalog remembers the skills found (catalog.Add).
+// Invalid candidates are returned as issues.SkillIssues next to what is
+// valid; such a search is not complete, so a repeated call searches -- and
 // reports the same issues -- again.
 //
-// Примеры (репозиторий: скилы one в "a", two в "b"):
-//   - LoadPath("a")  -> [one]: репозиторий получен, "a" обойдена
+// The catalog remembers skills only: an answer from it holds no Sources.
+// Those were returned by the call that searched p.
+//
+// Примеры (репозиторий: скилы one в "a", two в "b", манифест
+// "skill-sources.yaml" с источником S; Scanner ищет и манифесты):
+//   - LoadPath("a")  -> скилы [one]: репозиторий получен, "a" обойдена
 //   - LoadPath("a") ещё раз -> [one] из каталога, ничего не читается
-//   - LoadPath(".") после "a" -> [one, two]: "." шире, обходится заново,
-//     one берётся уже загруженный
-func (d SkillSelector) LoadPath(ctx context.Context, key model.SourceKey, p string) ([]*entity.Skill, error) {
+//   - LoadPath(".") после "a" -> скилы [one, two], источники [S]: "." шире,
+//     обходится заново, one берётся уже загруженный
+//   - LoadPath(".") ещё раз -> скилы [one, two] из каталога, источников нет
+func (d SkillSelector) LoadPath(ctx context.Context, key model.SourceKey, p string) (sourcing.ScanResult, error) {
 	skills, err := d.SkillCatalog.GetByPath(ctx, key, p)
 	if !errors.Is(err, entity.ErrSkillNotCached) {
-		return skills, err
+		return sourcing.ScanResult{Skills: skills}, err
 	}
 	repo, start, err := d.SkillCatalog.Acquire(ctx, key, p)
 	if err != nil {
-		return nil, err
+		return sourcing.ScanResult{}, err
 	}
-	found, problems := d.SkillCatalog.Scanner.Scan(ctx, repo, start)
-	skills = found.Skills
-	d.SkillCatalog.Add(repo.Key, start, skills, len(problems) == 0)
+	found, problems := d.scanner().Scan(ctx, repo, start)
+	d.SkillCatalog.Add(repo.Key, start, found.Skills, len(problems) == 0)
 	if len(problems) > 0 {
-		return skills, problems
+		return found, problems
 	}
-	return skills, nil
+	return found, nil
 }
 
 // Select loads into the catalog the skills spec selects by path: for each
 // of its subpaths (defaulting to ".") it calls LoadPath with spec's
-// SourceKey. Select returns the skills, each once.
+// SourceKey. Select returns the skills, each once, and the sources the
+// source manifests under those subpaths list, as LoadPath returned them
+// (a manifest under two overlapping subpaths gives its sources twice).
 //
 // spec.Tags are not applied yet: selecting by tags is postponed (see
 // AGENTS.md), every skill under the subpaths is selected.
@@ -73,10 +91,10 @@ func (d SkillSelector) LoadPath(ctx context.Context, key model.SourceKey, p stri
 //     "missing")
 //   - провайдер не отдал репозиторий -> ни одного скила, одна проблема
 //     source-acquire (а не по одной на каждый subpath)
-func (d SkillSelector) Select(ctx context.Context, spec model.SourceSpec) ([]*entity.Skill, issues.SkillIssues) {
+func (d SkillSelector) Select(ctx context.Context, spec model.SourceSpec) (sourcing.ScanResult, issues.SkillIssues) {
 	source := spec.Key().String()
 	var problems issues.SkillIssues
-	selected := []*entity.Skill{}
+	selected := sourcing.ScanResult{Skills: []*entity.Skill{}}
 	seen := map[string]bool{}
 	paths := spec.Subpaths
 	if len(paths) == 0 {
@@ -96,12 +114,13 @@ func (d SkillSelector) Select(ctx context.Context, spec model.SourceSpec) ([]*en
 				break
 			}
 		}
-		for _, s := range found {
+		for _, s := range found.Skills {
 			if !seen[s.Key()] {
-				selected = append(selected, s)
+				selected.Skills = append(selected.Skills, s)
 				seen[s.Key()] = true
 			}
 		}
+		selected.Sources = append(selected.Sources, found.Sources...)
 	}
 	for i := range problems {
 		if problems[i].Source == "" {

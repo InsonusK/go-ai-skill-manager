@@ -82,8 +82,8 @@ func catalogSteps(sc *godog.ScenarioContext, shared *catalogTreeFS) {
 		return nil
 	})
 	sc.Step(`^I get or add skills at "([^"]*)"$`, func(ctx context.Context, p string) error {
-		skills, err := (skill_selector.SkillSelector{SkillCatalog: catalog}).LoadPath(ctx, model.SourceKey{Type: "local", Path: "repo"}, p)
-		found = skills
+		result, err := (skill_selector.SkillSelector{SkillCatalog: catalog}).LoadPath(ctx, model.SourceKey{Type: "local", Path: "repo"}, p)
+		found = result.Skills
 		failure = err
 		return nil
 	})
