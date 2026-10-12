@@ -31,7 +31,9 @@ func (p countingProvider) Acquire(ctx context.Context, key model.SourceKey, opti
 }
 
 func initialize(sc *godog.ScenarioContext) {
-	catalogSteps(sc)
+	var tree catalogTreeFS
+	catalogSteps(sc, &tree)
+	scannerSteps(sc, &tree)
 	var manager *sourcing.Manager
 	var calls int
 	var closedOrder []string

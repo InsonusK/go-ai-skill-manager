@@ -1,5 +1,5 @@
 ---
-status: draft
+status: sent
 kind: improvement
 skill: cucumber-testing
 source:
@@ -9,6 +9,8 @@ source:
 commit: 00727d0ec3c2fc096f66a50aaea87d9c7a794f9e
 skill_path: skills/testing/core/cucumber-testing.skill
 created_at: 2026-10-12T09:03:18Z
+issue_url: https://github.com/InsonusK/ai-skills/issues/214
+sent_at: 2026-10-12T09:08:21Z
 ---
 
 # Type tags: add api/mcp and infrastructure/client/git

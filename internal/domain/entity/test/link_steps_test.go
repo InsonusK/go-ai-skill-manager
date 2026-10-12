@@ -32,10 +32,6 @@ func (r *fakeSkillResolver) GetByPathUp(ctx context.Context, key model.SourceKey
 	return nil, errors.New("unexpected GetByPathUp")
 }
 
-func (r *fakeSkillResolver) TryGetOrFetchByPath(ctx context.Context, key model.SourceKey, p string) ([]*entity.Skill, error) {
-	return nil, errors.New("unexpected TryGetOrFetchByPath")
-}
-
 func (r *fakeSkillResolver) TryGetOrFetchByPathUp(ctx context.Context, key model.SourceKey, p string) (*entity.Skill, error) {
 	r.asked = append(r.asked, key.String()+" "+p)
 	return r.skill, r.err

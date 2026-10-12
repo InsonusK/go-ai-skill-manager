@@ -13,13 +13,15 @@ import (
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/entity"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/interfaces"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model"
+	skill_selector "github.com/InsonusK/go-ai-skill-manager/internal/domain/services/selector"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
+	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing/detectors"
 	"github.com/InsonusK/go-ai-skill-manager/tools/testsupport"
 	"github.com/cucumber/godog"
 )
 
 // catalogTreeFS wraps fstest.MapFS, counting Open calls per path so a test
-// can prove GetOrFetchByPath warms a found skill's own FilesByPath("") cache
+// can prove loading a path warms a found skill's own FilesByPath("") cache
 // (no re-walk on a later, separate FilesByPath call).
 type catalogTreeFS struct {
 	files  fstest.MapFS
@@ -33,7 +35,7 @@ func (f catalogTreeFS) Open(name string) (fs.File, error) {
 
 // catalogProvider is a fake interfaces.SourceProvider returning a
 // Repository backed by catalogTreeFS, counting Acquire calls to prove
-// Manager's own caching is reused across GetOrFetchByPath calls.
+// Manager's own caching is reused across SkillSelector.LoadPath calls.
 type catalogProvider struct {
 	calls *int
 	fs    catalogTreeFS
@@ -44,22 +46,26 @@ func (p catalogProvider) Acquire(ctx context.Context, key model.SourceKey, optio
 	return &entity.Repository{Key: key, FS: p.fs}, nil
 }
 
-func catalogSteps(sc *godog.ScenarioContext) {
+// catalogSteps leaves the files of the last "a source tree" step in shared,
+// for the steps of other files.
+func catalogSteps(sc *godog.ScenarioContext, shared *catalogTreeFS) {
 	var catalog *sourcing.SkillCatalog
 	var acquireCalls int
 	var openCounts map[string]int
 	var found []*entity.Skill
 	var failure error
 	var openSnapshot int
-	var remembered map[string]*entity.Skill
 
 	newCatalog := func(tree fstest.MapFS) *sourcing.SkillCatalog {
 		acquireCalls = 0
 		openCounts = map[string]int{}
-		provider := catalogProvider{calls: &acquireCalls, fs: catalogTreeFS{files: tree, counts: openCounts}}
-		return &sourcing.SkillCatalog{
+		*shared = catalogTreeFS{files: tree, counts: openCounts}
+		provider := catalogProvider{calls: &acquireCalls, fs: *shared}
+		c := &sourcing.SkillCatalog{
 			Manager: sourcing.NewManager(map[string]interfaces.SourceProvider{"local": provider}, ""),
 		}
+		c.Scanner = detectors.MustScanner(c)
+		return c
 	}
 	sc.Step(`^a source tree$`, func(ctx context.Context, d *godog.DocString) error {
 		var raw map[string]string
@@ -75,30 +81,10 @@ func catalogSteps(sc *godog.ScenarioContext) {
 		testsupport.Log("files=%v", raw)
 		return nil
 	})
-	sc.Step(`^folders excluded from checks of source "([^"]*)" are "([^"]*)"$`, func(ctx context.Context, source, folders string) error {
-		skip := []string{}
-		if folders != "" {
-			skip = strings.Split(folders, ",")
-		}
-		catalog.ExcludeFromChecks = map[model.SourceKey][]string{{Type: "local", Path: source}: skip}
-		return nil
-	})
 	sc.Step(`^I get or add skills at "([^"]*)"$`, func(ctx context.Context, p string) error {
-		skills, err := catalog.GetOrFetchByPath(ctx, model.SourceKey{Type: "local", Path: "repo"}, p)
+		skills, err := (skill_selector.SkillSelector{SkillCatalog: catalog}).LoadPath(ctx, model.SourceKey{Type: "local", Path: "repo"}, p)
 		found = skills
 		failure = err
-		return nil
-	})
-	sc.Step(`^I fetch skills at "([^"]*)"$`, func(ctx context.Context, p string) error {
-		repo, err := catalog.Manager.Get(ctx, model.SourceKey{Type: "local", Path: "repo"})
-		if err != nil {
-			return err
-		}
-		skills, issues := catalog.FetchByPath(ctx, repo, p)
-		found, failure = skills, nil
-		if len(issues) > 0 {
-			failure = issues
-		}
 		return nil
 	})
 	sc.Step(`^I fetch the skill holding "([^"]*)"$`, func(ctx context.Context, p string) error {
@@ -127,24 +113,6 @@ func catalogSteps(sc *godog.ScenarioContext) {
 		}
 		return testsupport.Equal([]string{s.Name, at, string(s.Format)}, []string{name, location, format})
 	})
-	sc.Step(`^the found skills are remembered$`, func(ctx context.Context) error {
-		remembered = map[string]*entity.Skill{}
-		for _, s := range found {
-			remembered[s.Name] = s
-		}
-		return nil
-	})
-	sc.Step(`^the found skill "([^"]*)" is the one remembered$`, func(ctx context.Context, name string) error {
-		for _, s := range found {
-			if s.Name == name {
-				if s != remembered[name] {
-					return fmt.Errorf("skill %q was built again, not reused", name)
-				}
-				return nil
-			}
-		}
-		return fmt.Errorf("skill %q not found", name)
-	})
 	sc.Step(`^no directory under "([^"]*)" was read$`, func(ctx context.Context, dir string) error {
 		for p, n := range openCounts {
 			if n > 0 && (p == dir || strings.HasPrefix(p, dir+"/")) {
@@ -159,10 +127,6 @@ func catalogSteps(sc *godog.ScenarioContext) {
 	})
 	sc.Step(`^I get cached skills at "([^"]*)"$`, func(ctx context.Context, p string) error {
 		found, failure = catalog.GetByPath(ctx, model.SourceKey{Type: "local", Path: "repo"}, p)
-		return nil
-	})
-	sc.Step(`^I try to get or fetch skills at "([^"]*)"$`, func(ctx context.Context, p string) error {
-		found, failure = catalog.TryGetOrFetchByPath(ctx, model.SourceKey{Type: "local", Path: "repo"}, p)
 		return nil
 	})
 	sc.Step(`^I get the cached skill holding "([^"]*)"$`, func(ctx context.Context, p string) error {
@@ -212,15 +176,6 @@ func catalogSteps(sc *godog.ScenarioContext) {
 		}
 		openSnapshot = n
 		return nil
-	})
-	sc.Step(`^I list files by path "([^"]*)" for skill "([^"]*)"$`, func(ctx context.Context, p, name string) error {
-		for _, s := range found {
-			if s.Name == name {
-				_, err := s.FilesByPath(p)
-				return err
-			}
-		}
-		return fmt.Errorf("skill %q not found among found skills", name)
 	})
 	sc.Step(`^no additional directories were read$`, func(ctx context.Context) error {
 		n := 0

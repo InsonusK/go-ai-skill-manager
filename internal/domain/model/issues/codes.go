@@ -24,15 +24,16 @@ const (
 	CodeDeprecatedSetting  Code = "deprecated-setting"
 	CodeDeprecatedFlag     Code = "deprecated-flag"
 
-	CodeSourceAcquire  Code = "source-acquire"
-	CodeSourceRead     Code = "source-read"
-	CodeMissingSubpath Code = "missing-subpath"
-	CodeInvalidName    Code = "invalid-name"
-	CodeInvalidSkill   Code = "invalid-skill"
-	CodeNestedSkill    Code = "nested-skill"
-	CodeSkillNotFound  Code = "skill-not-found"
-	CodeDuplicateName  Code = "duplicate-name"
-	CodeWhenToUseBoth  Code = "when-to-use-both"
+	CodeSourceAcquire   Code = "source-acquire"
+	CodeSourceRead      Code = "source-read"
+	CodeMissingSubpath  Code = "missing-subpath"
+	CodeInvalidName     Code = "invalid-name"
+	CodeInvalidSkill    Code = "invalid-skill"
+	CodeNestedSkill     Code = "nested-skill"
+	CodeSkillNotFound   Code = "skill-not-found"
+	CodeDuplicateName   Code = "duplicate-name"
+	CodeWhenToUseBoth   Code = "when-to-use-both"
+	CodePatternConflict Code = "pattern-conflict"
 
 	CodeInvalidLink       Code = "invalid-link"
 	CodeMissingLinkTarget Code = "missing-link-target"
@@ -63,15 +64,16 @@ var ids = map[Code]string{
 	CodeDeprecatedSetting:  "W107",
 	CodeDeprecatedFlag:     "W108",
 
-	CodeSourceAcquire:  "E201",
-	CodeSourceRead:     "E202",
-	CodeMissingSubpath: "E203",
-	CodeInvalidName:    "E204",
-	CodeInvalidSkill:   "E205",
-	CodeNestedSkill:    "E206",
-	CodeSkillNotFound:  "E207",
-	CodeDuplicateName:  "E208",
-	CodeWhenToUseBoth:  "W209",
+	CodeSourceAcquire:   "E201",
+	CodeSourceRead:      "E202",
+	CodeMissingSubpath:  "E203",
+	CodeInvalidName:     "E204",
+	CodeInvalidSkill:    "E205",
+	CodeNestedSkill:     "E206",
+	CodeSkillNotFound:   "E207",
+	CodeDuplicateName:   "E208",
+	CodeWhenToUseBoth:   "W209",
+	CodePatternConflict: "E210",
 
 	CodeInvalidLink:       "E301",
 	CodeMissingLinkTarget: "E302",

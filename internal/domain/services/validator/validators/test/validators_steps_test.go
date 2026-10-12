@@ -12,7 +12,9 @@ import (
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/links"
+	skill_selector "github.com/InsonusK/go-ai-skill-manager/internal/domain/services/selector"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
+	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing/detectors"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/validator"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/validator/validators"
 	"github.com/InsonusK/go-ai-skill-manager/tools/testsupport"
@@ -40,6 +42,7 @@ func initialize(sc *godog.ScenarioContext) {
 	sc.Before(func(ctx context.Context, s *godog.Scenario) (context.Context, error) {
 		trees = map[string]fstest.MapFS{}
 		catalog = &sourcing.SkillCatalog{Manager: sourcing.NewManager(map[string]interfaces.SourceProvider{"local": sourcesProvider{trees: trees}}, "")}
+		catalog.Scanner = detectors.MustScanner(catalog)
 		problems, registerErr = nil, nil
 		entity.SetDefaultLinkSearcher(links.NewDefaultLinkFactory())
 		return ctx, nil
@@ -73,7 +76,7 @@ func initialize(sc *godog.ScenarioContext) {
 	})
 	sc.Step(`^skills at "([^"]*)" of source "([^"]*)" are selected$`, func(ctx context.Context, paths, source string) error {
 		for _, p := range strings.Split(paths, ",") {
-			if _, err := catalog.GetOrFetchByPath(ctx, model.SourceKey{Type: "local", Path: source}, p); err != nil {
+			if _, err := (skill_selector.SkillSelector{SkillCatalog: catalog}).LoadPath(ctx, model.SourceKey{Type: "local", Path: source}, p); err != nil {
 				return err
 			}
 		}

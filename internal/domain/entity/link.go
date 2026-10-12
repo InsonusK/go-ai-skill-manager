@@ -21,12 +21,11 @@ var ErrSkillNotCached = errors.New("skill is not in the catalog cache")
 // imports entity. "ByPath" finds skills at or below the path, "ByPathUp"
 // finds the one skill whose folder holds the path. "Get" only looks at
 // skills already loaded and fails with ErrSkillNotCached otherwise;
-// "TryGetOrFetch" also loads a missing skill when the resolver is set to
-// add relations, and behaves like "Get" when it is not.
+// "TryGetOrFetch" also loads the missing skill when the resolver is set
+// to add relations, and behaves like "Get" when it is not.
 type SkillResolver interface {
 	GetByPath(ctx context.Context, key model.SourceKey, p string) ([]*Skill, error)
 	GetByPathUp(ctx context.Context, key model.SourceKey, p string) (*Skill, error)
-	TryGetOrFetchByPath(ctx context.Context, key model.SourceKey, p string) ([]*Skill, error)
 	TryGetOrFetchByPathUp(ctx context.Context, key model.SourceKey, p string) (*Skill, error)
 }
 

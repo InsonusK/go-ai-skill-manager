@@ -99,15 +99,18 @@
   Клон листает файлы базового слоя при первом обращении — базовый слой
   доделать до `Clone`. Тесты — `entity/features/target_catalog.feature`.
 - `services/sourcing`: `Manager` (acquire по `SourceKey`, кеш, `TempDir`
-  задаётся в `NewManager`), `SkillCatalog` (см. ниже).
-- `services/selector`: `SkillSelector{SkillCatalog}.Select(ctx, spec)
-  ([]*Skill, issues.SkillIssues)` — наполняет каталог: `GetOrFetchByPath`
-  по `spec.Subpaths` (по умолчанию `"."`). **Теги пока не применяются**
+  задаётся в `NewManager`), `SkillCatalog`, `Scanner` + `Detector` (см.
+  ниже).
+- `services/selector`: `SkillSelector{SkillCatalog}` — наполняет каталог.
+  `LoadPath(ctx, key, p)`: `catalog.GetByPath` → промах → `Acquire` →
+  `catalog.Scanner.Scan` → `catalog.Add`. `Select(ctx, spec) ([]*Skill,
+  issues.SkillIssues)` — `LoadPath` по `spec.Subpaths` (по умолчанию
+  `"."`). **Теги пока не применяются**
   (см. «Отложено: фильтр по тегам»). Проблема не
   останавливает остальные subpath, кроме `source-acquire` и отмены
   контекста (`canceled`) — они прекращают источник. У каждой проблемы
   заполнен `Source`. `unsafe-subpath` — panic (его отсекает валидатор
-  конфига); `ErrSkillNotCached` — panic (Select ссылки не разрешает).
+  конфига).
 - `handler`: обработчики команд — только оркестрация.
   `FetchAndValidateSkills(ctx, *sourcing.Manager, req) (*SkillCatalog,
   issues.SkillIssues)`: каталог (`AddRelations`, `ExcludeFromChecks` =
@@ -132,23 +135,29 @@
 
 ## `SkillCatalog`
 
+- Каталог — **только найденные скилы**: кэш и поиск по пути. Обхода вниз в
+  нём нет (он в `Scanner`), других объектов он не хранит.
 - `Get*` — только кэш, поиск **по ключу**; промах → `ErrSkillNotCached`.
-  `FetchByPath`/`FetchByPathUp` (публичные) — найти и провалидировать в
-  `Repository`, ничего не запоминают. `addPath` — запомнить.
-  `GetOrFetch*` = `Get*` + fetch + `addPath`; `TryGetOrFetch*` = `Get*` при
-  `AddRelations=false`, иначе `GetOrFetch*`.
+  `Add(key, start, skills, complete)` — запомнить результат поиска вниз:
+  полный (без проблем) становится ответом `GetByPath(start)`, неполный
+  запоминает только каждый скил по его месту. `FetchByPathUp` (публичный)
+  — найти и провалидировать скил вверх от пути, ничего не запоминает;
+  `GetOrFetchByPathUp` = `GetByPathUp` + fetch + запомнить;
+  `TryGetOrFetchByPathUp` = `GetByPathUp` при `AddRelations=false`, иначе
+  `GetOrFetchByPathUp`. `Acquire(ctx, key, p)` — репозиторий + путь в нём.
 - `*ByPath` — скилы на/ниже пути; `*ByPathUp` — скил, в папке которого
   лежит путь (подъём по папкам вверх, соседние скилы не грузятся).
 - Кэш `cachedByPath`: ключ `GetSkillKey(repo, путь)` → скилы. `addPath`
   кладёт результат под **запрошенным путём** и каждый скил под его
   `DirOrMarkerPath()`. `GetByPath` отвечает только на ранее запрошенный путь
-  или место скила (иначе `GetOrFetchByPath(".")` после `"a"` вернул бы
+  или место скила (иначе загрузка `"."` после `"a"` вернула бы
   неполный ответ). Загрузка с `Issues` под запрошенным путём не
   запоминается — повторный вызов снова сообщит о тех же проблемах.
 - `Skills()` — все загруженные скилы по одному, в порядке загрузки;
   догруженные позже идут в конец.
 - `AddRelations` — поле каталога (зеркало настройки `add_relations`).
-- Валидация при fetch: `pattern-conflict`, `invalid-name`/`invalid-skill`,
+- Валидация при поиске (`sourcing/detectors`): `pattern-conflict` (свой
+  код, не текст внутри `invalid-skill`), `invalid-name`/`invalid-skill`,
   `nested-skill`. Коды пути: `source-acquire` (провайдер не отдал
   репозиторий), `missing-subpath`, `unsafe-subpath`. `Source` заполнен.
 - `ExcludeFromChecks map[SourceKey][]string` — папки верхнего уровня
@@ -157,8 +166,45 @@
   `IsExcludedFromChecks(skill, rel)`. Своего умолчания нет: источника нет
   в карте — ничего не исключено (умолчание подставляет конфиг).
 - Примеры преобразований — в doc-комментариях `catalog.go`; тесты —
-  `catalog.feature`, `catalog.fetchByPath.feature`,
-  `catalog.fetchByPathUp.feature`.
+  `catalog.feature`, `catalog.fetchByPathUp.feature`.
+
+## `Scanner` и `Detector` (`services/sourcing`)
+
+- `Scanner` (`NewScanner(detectors...)`, отказывает повтору имени) —
+  **единственный обход папок вниз**: один проход для всех распознавателей.
+  `Scan(ctx, repo, start) (ScanResult, issues.SkillIssues)`; `Probe` — то
+  же для одной записи, без спуска (им ищет вверх `FetchByPathUp`). Ничего
+  не запоминает.
+- `ScanResult{Skills}` — найденное по видам, типизированно (не `any`);
+  новый вид объекта = новое поле.
+- `Detector{Name, IsSelected(Entry), Select(ctx, Entry) (ScanResult,
+  issues), IsValid(ctx, ScanResult) issues}`; `Entry{Repo, Path, IsDir,
+  Children}` — записи папки уже прочитаны обходчиком. На каждую запись:
+  никто не выбрал — в папку заходим, файл пропускаем; выбрал один —
+  `Select` строит, `IsValid` проверяет, **в выбранную папку не заходим** (и
+  в невалидную тоже); выбрали несколько — `pattern-conflict`, объект
+  никому, в папку не заходим. `.git` не обходится.
+- Реализации — подпакет `sourcing/detectors`, по одной на формат скила:
+  `AgentSkill` (`agent-skill`: папка с файлом `SKILL.md`), `HumanSkill`
+  (`human-skill`: папка `x.skill` с файлом `x.skill.md`), `FlatSkill`
+  (`flat-skill`: файл `*.skill.md`). Общее — `detectors/skill.go`:
+  переиспользование уже загруженного скила (`catalog.SkillAt`) и
+  `validateSkill` (`nested-skill`; `*.skill.md` прямо в папке скила —
+  `pattern-conflict`, потому что в выбранную папку обход не заходит и
+  `FlatSkill` этот файл не увидит). `detectors.MustScanner(catalog,
+  extra...)` — обходчик со всеми форматами скилов.
+- Каталогу обходчик задаётся полем `SkillCatalog.Scanner` (пакет
+  `detectors` импортирует `sourcing`, не наоборот); без него
+  `FetchByPathUp` — panic.
+- Имя `Selector` занято (`SkillSelector` выбирает по конфигу), поэтому
+  `Detector`/`Scanner`.
+- Тесты обходчика — `sourcing/features/scanner.feature` (на тестовых
+  распознавателях). Тесты распознавателей — рядом с ними,
+  `sourcing/detectors/features`: по файлу на распознаватель
+  (`agent_skill`, `human_skill`, `flat_skill` — зарегистрирован только он
+  один, видно, что он выбирает сам) и `skills.feature` (все вместе:
+  конфликты, `nested-skill`, исключённые папки, переиспользование). В
+  шагах содержимое файла `skill:NAME` — файл скила с именем NAME.
 
 ## Ссылки (`entity.Link`)
 
@@ -685,8 +731,8 @@ master или запустить workflow вручную.
 ## Открытые вопросы
 
 - Невалидное имя скила даёт разные коды: flat-скил — `invalid-name`,
-  скил-папка — `invalid-skill` (`isSkillDir` заворачивает ошибку
-  `MakeSkill` в общий код вместе с `pattern-conflict`). Тесты проверяют
+  скил-папка — `invalid-skill` (так заданы коды у `FlatSkill` и
+  `AgentSkill`/`HumanSkill`). Тесты проверяют
   общий текст `invalid skill name`.
 
 ## Имена: абстрактные термины, переименовать по ходу
@@ -738,6 +784,54 @@ master или запустить workflow вручную.
    assets, бейджи README; удалить `release-info-publish.yml`,
    `release-test-report.yml`, `check-version`; раздел «CI и релизы» —
    переписать.
+
+## Текущая задача: вложенные источники (манифесты) ⏳
+
+Цель: внутри источника, **вне папок скилов**, могут лежать манифесты —
+файлы со списком других источников; при обнаружении они тоже загружаются
+(транзитивно). Ветка `feature/nested-sources`.
+
+Принятые решения:
+- Имя манифеста — `skill-sources.yaml` или `<набор>.skill-sources.yaml`
+  (`model.SourceManifestFile`, `model.IsSourceManifest`; только `.yaml`).
+  Не `ai-skills*.yaml`: собственный конфиг чужого репозитория не должен
+  молча подтягивать его источники.
+- В манифесте — только `sources`; любой другой ключ — ошибка.
+- `type: local` в манифесте, скачанном не из local-источника, — запрет
+  (чужой репозиторий не должен копировать файлы с машины пользователя); в
+  манифесте local-источника путь считается от папки манифеста.
+  (Предложено, пользователь отдельно не подтверждал.)
+- Включено по умолчанию; выключается `settings.nested_sources: false` и
+  на источник `nested_sources: false`.
+- Один репозиторий с разным `tree` из разных манифестов/конфига — **пока
+  ошибка** (правило «ближайший к корню побеждает» отложено).
+- Манифесты ищет тот же обход, что и скилы: распознаватель манифестов —
+  ещё один `Detector` в `Scanner` (`SubSourceDetector`), результат — поле
+  `ScanResult.Sources []model.SourceSpec` (в папки скилов обход не заходит, манифест
+  внутри скила — обычный файл скила). Найденное — **дополнительные
+  источники в очереди на загрузку**, а не объекты каталога: `SkillCatalog`
+  хранит только скилы (решение пользователя). Скилы, догруженные по
+  ссылкам (`*ByPathUp`), источников не добавляют.
+- Домен не импортирует `config`: разбор манифеста — порт
+  (`interfaces.SourceManifestReader`), реализация в `config` через те же
+  `Parse` и `config/validator`.
+- Циклы и ромбы: помнить обработанные `SourceKey` + subpath; один
+  репозиторий из двух манифестов — объединение subpath, не
+  `duplicate-source`.
+
+Шаги (после каждого — стоп):
+1. ✅ Рефакторинг: `Scanner` + `Detector` + `ScanResult`, три
+   распознавателя скилов в `sourcing/detectors`, обход вниз убран из
+   каталога (`FetchByPath`, `GetOrFetchByPath`, `TryGetOrFetchByPath`
+   удалены), `LoadPath` в `SkillSelector`, код `pattern-conflict` (E210).
+   Поведение то же, кроме кода конфликта форматов: был `invalid-skill` с
+   текстом `pattern-conflict`, стал `pattern-conflict`.
+2. Распознаватель манифестов (`model.IsSourceManifest`) + порт чтения;
+   `Select` отдаёт найденные источники.
+3. Разбор манифеста в `config`, новые коды, сценарии валидатора.
+4. Очередь в `FetchAndValidateSkills`: транзитивность, циклы, объединение
+   subpath, ошибка на разный `tree`.
+5. Настройка `nested_sources`, README и `docs/api/reference.md`.
 
 ## Текущая задача: структурный вывод и номера проблем ⏳
 

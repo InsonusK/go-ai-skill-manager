@@ -14,6 +14,7 @@ import (
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 	skill_selector "github.com/InsonusK/go-ai-skill-manager/internal/domain/services/selector"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
+	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing/detectors"
 	"github.com/InsonusK/go-ai-skill-manager/tools/testsupport"
 	"github.com/cucumber/godog"
 )
@@ -78,6 +79,7 @@ func initialize(sc *godog.ScenarioContext) {
 		catalog = &sourcing.SkillCatalog{
 			Manager: sourcing.NewManager(map[string]interfaces.SourceProvider{"local": selectProvider{tree: tree, calls: &acquireCalls, fail: acquireFailure}}, ""),
 		}
+		catalog.Scanner = detectors.MustScanner(catalog)
 		if canceled {
 			var cancel context.CancelFunc
 			ctx, cancel = context.WithCancel(ctx)

@@ -10,6 +10,7 @@ import (
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 	skill_selector "github.com/InsonusK/go-ai-skill-manager/internal/domain/services/selector"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
+	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing/detectors"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/validator"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/validator/validators"
 )
@@ -35,6 +36,7 @@ func FetchAndValidateSkills(ctx context.Context, sources *sourcing.Manager, req 
 		AddRelations:      req.AddRelations,
 		ExcludeFromChecks: excludeFromChecks(req),
 	}
+	catalog.Scanner = detectors.MustScanner(catalog)
 	selector := skill_selector.SkillSelector{SkillCatalog: catalog}
 	var problems issues.SkillIssues
 	for _, spec := range req.Sources {

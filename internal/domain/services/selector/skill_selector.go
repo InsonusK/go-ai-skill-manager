@@ -13,15 +13,48 @@ import (
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
 )
 
+// SkillSelector fills SkillCatalog with the skills a source selects: the
+// catalog's Scanner searches the source's folders, the catalog remembers
+// what it found.
 type SkillSelector struct {
 	SkillCatalog *sourcing.SkillCatalog
 }
 
+// LoadPath returns the skills at or below path p of source key, loading
+// them into the catalog first when it has no complete answer for p yet
+// (catalog.GetByPath): the Repository is acquired (lazily, cached by the
+// catalog's Manager), p is resolved inside it, the catalog's Scanner
+// searches from it down, and the catalog remembers the skills found (catalog.Add). Invalid
+// candidates are returned as issues.SkillIssues next to the valid skills;
+// such a search is not complete, so a repeated call searches -- and
+// reports the same issues -- again.
+//
+// Примеры (репозиторий: скилы one в "a", two в "b"):
+//   - LoadPath("a")  -> [one]: репозиторий получен, "a" обойдена
+//   - LoadPath("a") ещё раз -> [one] из каталога, ничего не читается
+//   - LoadPath(".") после "a" -> [one, two]: "." шире, обходится заново,
+//     one берётся уже загруженный
+func (d SkillSelector) LoadPath(ctx context.Context, key model.SourceKey, p string) ([]*entity.Skill, error) {
+	skills, err := d.SkillCatalog.GetByPath(ctx, key, p)
+	if !errors.Is(err, entity.ErrSkillNotCached) {
+		return skills, err
+	}
+	repo, start, err := d.SkillCatalog.Acquire(ctx, key, p)
+	if err != nil {
+		return nil, err
+	}
+	found, problems := d.SkillCatalog.Scanner.Scan(ctx, repo, start)
+	skills = found.Skills
+	d.SkillCatalog.Add(repo.Key, start, skills, len(problems) == 0)
+	if len(problems) > 0 {
+		return skills, problems
+	}
+	return skills, nil
+}
+
 // Select loads into the catalog the skills spec selects by path: for each
-// of its subpaths (defaulting to ".") it calls catalog.GetOrFetchByPath
-// with spec's SourceKey -- catalog itself acquires the Repository (via its
-// Manager, lazily/cached), normalizes the path, and finds, validates and
-// remembers every skill at or below it. Select returns them, each once.
+// of its subpaths (defaulting to ".") it calls LoadPath with spec's
+// SourceKey. Select returns the skills, each once.
 //
 // spec.Tags are not applied yet: selecting by tags is postponed (see
 // AGENTS.md), every skill under the subpaths is selected.
@@ -50,18 +83,7 @@ func (d SkillSelector) Select(ctx context.Context, spec model.SourceSpec) ([]*en
 		paths = []string{"."}
 	}
 	for _, p := range paths {
-		found, err := d.SkillCatalog.GetOrFetchByPath(ctx, spec.Key(), p)
-		if errors.Is(err, entity.ErrSkillNotCached) {
-			// Not an error to report but a broken invariant: Select is the
-			// initial load, it only fetches -- following a Link to another
-			// skill (Link -> entity.SkillResolver, whose cache-only lookups
-			// are the only producers of ErrSkillNotCached) belongs to the later
-			// validation stage, which runs after every source is selected. If
-			// this fires, something reachable from GetOrFetchByPath started
-			// resolving links during Select; move that call out of Select
-			// rather than turning this panic into an Issue.
-			panic(fmt.Sprintf("skill_selector: cache-only skill lookup reached during Select (source %s, path %q): %v", spec.Key(), p, err))
-		}
+		found, err := d.LoadPath(ctx, spec.Key(), p)
 		if err != nil {
 			list := asIssues(err, p)
 			for _, i := range list {
@@ -89,7 +111,7 @@ func (d SkillSelector) Select(ctx context.Context, spec model.SourceSpec) ([]*en
 	return selected, problems
 }
 
-// asIssues turns a GetOrFetchByPath error for subpath p into issues: the
+// asIssues turns a LoadPath error for subpath p into issues: the
 // catalog's own issues as they are, a canceled context as "canceled", any
 // other error as "source-read".
 func asIssues(err error, p string) issues.SkillIssues {

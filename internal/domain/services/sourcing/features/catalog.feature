@@ -1,7 +1,7 @@
 @type/service
 Feature: SkillCatalog answers from its cache and fetches on a miss
  @category/happy
- Scenario: A repeated GetOrFetchByPath call for the same path reuses the already-resolved skill
+ Scenario: Loading the same path again reuses the already-resolved skill
   Given a source tree
    """
    {"a/SKILL.md":"---\nname: one\n---\n"}
@@ -13,7 +13,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   And found names are "one" and catalog error contains ""
 
  @category/happy
- Scenario: Manager acquisition is lazy and cached across GetOrFetchByPath calls
+ Scenario: Manager acquisition is lazy and cached across loaded paths
   Given a source tree
    """
    {"a/SKILL.md":"---\nname: one\n---\n","b/SKILL.md":"---\nname: two\n---\n"}
@@ -68,7 +68,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   Then the catalog reports the skill is not cached
 
  @category/happy
- Scenario: GetOrFetchByPath fetches a wider path even when a skill below it is already loaded
+ Scenario: A wider path is searched even when a skill below it is already loaded
   Given a source tree
    """
    {"a/SKILL.md":"---\nname: one\n---\n","b/SKILL.md":"---\nname: two\n---\n"}
@@ -78,7 +78,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   Then found names are "one,two" and catalog error contains ""
 
  @category/negative
- Scenario: A fetch that found an invalid skill is not remembered as complete, so it reports the issue again
+ Scenario: A search that found an invalid skill is not remembered as complete, so it reports the issue again
   Given a source tree
    """
    {"a/SKILL.md":"---\nname: one\n---\n","b/SKILL.md":"---\nname: two\n---\n","b/c/SKILL.md":"---\nname: three\n---\n"}
@@ -109,40 +109,6 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I get cached skills at "."
   Then the catalog reports the skill is not cached
   And the source manager acquired "0" times
-
- @category/happy
- Scenario Outline: TryGetOrFetchByPath fetches only when add relations is on
-  Given a source tree
-   """
-   {"a/SKILL.md":"---\nname: one\n---\n"}
-   """
-  And add relations is "<relations>"
-  When I try to get or fetch skills at "a"
-  Then the source manager acquired "<acquired>" times
-  Examples:
-   | relations | acquired |
-   | true      | 1        |
-   | false     | 0        |
-
- @category/happy
- Scenario: TryGetOrFetchByPath with add relations on returns the fetched skill
-  Given a source tree
-   """
-   {"a/SKILL.md":"---\nname: one\n---\n"}
-   """
-  And add relations is "true"
-  When I try to get or fetch skills at "a"
-  Then found names are "one" and catalog error contains ""
-
- @category/negative
- Scenario: TryGetOrFetchByPath with add relations off fails with not-cached
-  Given a source tree
-   """
-   {"a/SKILL.md":"---\nname: one\n---\n"}
-   """
-  And add relations is "false"
-  When I try to get or fetch skills at "a"
-  Then the catalog reports the skill is not cached
 
  @category/happy
  Scenario: TryGetOrFetchByPathUp returns a cached skill without reading anything
