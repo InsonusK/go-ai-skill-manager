@@ -148,7 +148,15 @@ func initialize(sc *godog.ScenarioContext) {
 	sc.Step(`^the scan finds sources "([^"]*)"$`, func(ctx context.Context, want string) error {
 		got := []string{}
 		for _, s := range found.Sources {
-			got = append(got, s.Key().String())
+			got = append(got, s.Spec.Key().String())
+		}
+		return testsupport.Equal(strings.Join(got, ","), want)
+	})
+	// the found sources are listed by: "source manifest", comma-separated.
+	sc.Step(`^the found sources are listed by "([^"]*)"$`, func(ctx context.Context, want string) error {
+		got := []string{}
+		for _, s := range found.Sources {
+			got = append(got, s.ListedBy.String()+" "+s.Manifest)
 		}
 		return testsupport.Equal(strings.Join(got, ","), want)
 	})

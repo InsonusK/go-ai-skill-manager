@@ -116,10 +116,10 @@
   заполнен `Source`. `unsafe-subpath` — panic (его отсекает валидатор
   конфига).
 - `handler`: обработчики команд — только оркестрация.
-  `FetchAndValidateSkills(ctx, *sourcing.Manager, req) (*SkillCatalog,
-  issues.SkillIssues)`: каталог (`AddRelations`, `ExcludeFromChecks` =
-  глобальные + источника по `SourceKey`) → `Select` по **всем**
-  источникам → `[link-validator, skill-name-validator]` (даже после
+  `FetchAndValidateSkills(ctx, *sourcing.Manager, manifests, req)
+  (*SkillCatalog, issues.SkillIssues)`: каталог (`AddRelations`,
+  `ExcludeFromChecks` = глобальные + источника по `SourceKey`) →
+  `SourceLoader.Load` по **всем** источникам, включая вложенные → `[link-validator, skill-name-validator]` (даже после
   ошибок выбора) → каталог и все проблемы. `req` уже прошёл
   `config/validator.Validate`.
   `handler/sync.go`: `SyncService{Sources, State, Writer}.Run(ctx, req)
@@ -823,8 +823,11 @@ master или запустить workflow вручную.
 - Любая проблема в манифесте — ни одного источника из него.
 - Включено по умолчанию; выключается `settings.nested_sources: false` и
   на источник `nested_sources: false`.
-- Один репозиторий с разным `tree` из разных манифестов/конфига — **пока
-  ошибка** (правило «ближайший к корню побеждает» отложено).
+- Один репозиторий (type + path) с разным `tree` — **пока ошибка**
+  `conflicting-tree` на манифесте, источник не грузится (правило
+  «ближайший к корню побеждает» отложено). Известные tree — из конфига и
+  из ранее прочитанных манифестов; источники конфига между собой не
+  сравниваются.
 - Манифесты ищет тот же обход, что и скилы: распознаватель манифестов —
   ещё один `Detector` в `Scanner` (`SubSourceDetector`), результат — поле
   `ScanResult.Sources []model.SourceSpec` (в папки скилов обход не заходит, манифест
@@ -838,9 +841,24 @@ master или запустить workflow вручную.
   пути local-источников абсолютные → `config/validator.Validate` на
   `Request{Sources}` (те же валидаторы и те же `Setting`, что у конфига).
   Тесты — `config/manifest/features/reader.feature`.
-- Циклы и ромбы: помнить обработанные `SourceKey` + subpath; один
-  репозиторий из двух манифестов — объединение subpath, не
-  `duplicate-source`.
+- Очередь — `selector.SourceLoader{Selector, ExcludeFromChecks}.Load(ctx,
+  roots)`: сначала источники конфига по порядку, затем перечисленные в
+  манифестах — по уровням, в порядке находки. Помнит запрошенные
+  `SourceKey` + очищенный subpath: каждый грузится один раз (ромб),
+  взаимные ссылки обрываются (цикл — даже когда обход с проблемами не
+  запомнен каталогом), источник, перечисленный снова с новыми subpath,
+  догружается только по ним. Проблема манифеста/источника остальные не
+  останавливает, отмена контекста — останавливает.
+- `exclude_from_checks` вложенного источника: глобальные + его собственные,
+  **если у репозитория ещё нет списка** (из конфига или более раннего
+  манифеста) — первый список остаётся (скилы репозитория грузятся один
+  раз). Не ошибка: чужой манифест пользователь исправить не может, а в
+  своём конфиге — переопределит.
+- Читатель передаётся в обработчик: `FetchAndValidateSkills(ctx, sources,
+  manifests, req)`, `SyncService.Manifests`; `nil` — манифесты не читаются.
+  `command` (`sync`, `validate`) передаёт `manifest.Reader{}`.
+- `ScanResult.Sources` — `[]sourcing.ListedSource{Spec, ListedBy,
+  Manifest}`: проблемы очереди указывают на манифест.
 
 Шаги (после каждого — стоп):
 1. ✅ Рефакторинг: `Scanner` + `Detector` + `ScanResult`, три
@@ -856,8 +874,11 @@ master или запустить workflow вручную.
 3. ✅ `config/manifest.Reader`, `config.ParseSourceManifest`, коды
    `invalid-manifest` (E211), `local-sub-source` (E212). В обработчике ещё
    не подключён.
-4. Очередь в `FetchAndValidateSkills`: транзитивность, циклы, объединение
-   subpath, ошибка на разный `tree`.
+4. ✅ `SourceLoader` (очередь) в `FetchAndValidateSkills`, подключён в
+   `sync` и `validate`; код `conflicting-tree` (E213). Тесты —
+   `selector/features/source_loader.feature`, два сценария в
+   `fetch_and_validate_skills.feature`. **С этого шага функция работает в
+   CLI.**
 5. Настройка `nested_sources`, README и `docs/api/reference.md`.
 
 ## Текущая задача: структурный вывод и номера проблем ⏳

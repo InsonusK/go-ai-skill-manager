@@ -7,6 +7,7 @@ import (
 
 	"github.com/InsonusK/go-ai-skill-manager/internal/command/common"
 	"github.com/InsonusK/go-ai-skill-manager/internal/config"
+	"github.com/InsonusK/go-ai-skill-manager/internal/config/manifest"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/handler"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
@@ -81,7 +82,7 @@ func (s *Sync) Run(ctx context.Context, app *common.App, cwd string) (code int) 
 	}
 	sources := sourcing.NewManager(app.Providers, req.TempDir)
 	defer closeSources(ctx, app, sources, &code)
-	result, err := handler.SyncService{Sources: sources, State: app.State, Writer: app.Writer}.Run(ctx, req)
+	result, err := handler.SyncService{Sources: sources, Manifests: manifest.Reader{}, State: app.State, Writer: app.Writer}.Run(ctx, req)
 	warnings = append(warnings, common.Rows(result.Warnings)...)
 	if err != nil {
 		rows := common.Reportables(err)

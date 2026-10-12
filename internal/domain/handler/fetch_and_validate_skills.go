@@ -6,6 +6,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/InsonusK/go-ai-skill-manager/internal/domain/interfaces"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 	skill_selector "github.com/InsonusK/go-ai-skill-manager/internal/domain/services/selector"
@@ -26,11 +27,16 @@ var skillValidators = mustManager(
 // skills plus, with req.AddRelations, the skills their links lead to --
 // and every problem found; a problem doesn't stop the rest of the work.
 //
+// With manifests set, the sources the loaded sources name themselves in
+// source manifests are loaded too (see skill_selector.SourceLoader); nil
+// leaves manifests unread.
+//
 // req must have passed config/validator.Validate.
 //
-// Порядок: сначала выбор по **всем** источникам (ссылки между источниками
-// и дубли имён видны только на полном каталоге), затем валидаторы.
-func FetchAndValidateSkills(ctx context.Context, sources *sourcing.Manager, req model.Request) (*sourcing.SkillCatalog, issues.SkillIssues) {
+// Порядок: сначала выбор по **всем** источникам, в том числе вложенным
+// (ссылки между источниками и дубли имён видны только на полном
+// каталоге), затем валидаторы.
+func FetchAndValidateSkills(ctx context.Context, sources *sourcing.Manager, manifests interfaces.SourceManifestReader, req model.Request) (*sourcing.SkillCatalog, issues.SkillIssues) {
 	catalog := &sourcing.SkillCatalog{
 		Manager:           sources,
 		AddRelations:      req.AddRelations,
@@ -38,11 +44,11 @@ func FetchAndValidateSkills(ctx context.Context, sources *sourcing.Manager, req 
 	}
 	catalog.Scanner = detectors.MustScanner(catalog)
 	selector := skill_selector.SkillSelector{SkillCatalog: catalog}
-	var problems issues.SkillIssues
-	for _, spec := range req.Sources {
-		_, found := selector.Select(ctx, spec)
-		problems = append(problems, found...)
+	if manifests != nil {
+		selector.Scanner = detectors.MustScanner(catalog, detectors.SubSource{Reader: manifests})
 	}
+	loader := skill_selector.SourceLoader{Selector: selector, ExcludeFromChecks: req.ExcludeFromChecks}
+	problems := loader.Load(ctx, req.Sources)
 	problems = append(problems, skillValidators.Validate(ctx, catalog)...)
 	return catalog, problems
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/InsonusK/go-ai-skill-manager/internal/command/common"
 	"github.com/InsonusK/go-ai-skill-manager/internal/config"
+	"github.com/InsonusK/go-ai-skill-manager/internal/config/manifest"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/handler"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/model/issues"
 	"github.com/InsonusK/go-ai-skill-manager/internal/domain/services/sourcing"
@@ -56,7 +57,7 @@ func (v *Validate) Run(ctx context.Context, app *common.App, cwd string) (code i
 	}
 	sources := sourcing.NewManager(app.Providers, req.TempDir)
 	defer closeSources(ctx, app, sources, &code)
-	catalog, problems := handler.FetchAndValidateSkills(ctx, sources, req)
+	catalog, problems := handler.FetchAndValidateSkills(ctx, sources, manifest.Reader{}, req)
 	warnings = append(warnings, common.Rows(problems)...)
 	app.PrintWarnings(warnings)
 	if issues.HasErrors(problems) {

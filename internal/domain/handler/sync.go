@@ -24,6 +24,9 @@ const ClaudeAdapter = "claude-property-adapter"
 // targets.
 type SyncService struct {
 	Sources *sourcing.Manager
+	// Manifests reads the source manifests found in the sources; nil
+	// leaves them unread (see FetchAndValidateSkills).
+	Manifests interfaces.SourceManifestReader
 	State   interfaces.StateReader
 	Writer  interfaces.PlanWriter
 }
@@ -58,7 +61,7 @@ type SyncResult struct {
 func (s SyncService) Run(ctx context.Context, req model.Request) (result SyncResult, err error) {
 	slog.InfoContext(ctx, "synchronization started", "sources", len(req.Sources), "targets", len(req.Targets), "dry_run", req.DryRun)
 	result = SyncResult{DryRun: req.DryRun, Skills: []string{}, Plans: []entity.TargetPlan{}}
-	catalog, problems := FetchAndValidateSkills(ctx, s.Sources, req)
+	catalog, problems := FetchAndValidateSkills(ctx, s.Sources, s.Manifests, req)
 	if issues.HasErrors(problems) {
 		return result, problems
 	}

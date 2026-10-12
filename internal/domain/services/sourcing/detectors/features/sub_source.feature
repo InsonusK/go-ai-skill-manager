@@ -43,6 +43,7 @@ Feature: SubSource finds the sources a source manifest lists
    """
   When I scan "." with detector "sub-source"
   Then the scan finds sources "github:one,local:two,github:three,github:four"
+  And the found sources are listed by "local:repo a/team.skill-sources.yaml,local:repo a/team.skill-sources.yaml,local:repo b/skill-sources.yaml,local:repo skill-sources.yaml"
 
  @category/happy
  Scenario: The reader is given the manifest: its source, path, content and the repository's folder

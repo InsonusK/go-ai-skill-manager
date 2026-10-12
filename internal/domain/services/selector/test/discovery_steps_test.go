@@ -51,6 +51,7 @@ func (lineReader) ReadSourceManifest(ctx context.Context, manifest model.SourceM
 }
 
 func initialize(sc *godog.ScenarioContext) {
+	sourceLoaderSteps(sc)
 	var readManifests bool
 	var sources []string
 	var tree fstest.MapFS
@@ -119,7 +120,7 @@ func initialize(sc *godog.ScenarioContext) {
 		selected, list := selector.Select(ctx, spec)
 		sources = []string{}
 		for _, s := range selected.Sources {
-			sources = append(sources, s.Key().String())
+			sources = append(sources, s.Spec.Key().String())
 		}
 		problems, failure = list, nil
 		if len(list) > 0 {

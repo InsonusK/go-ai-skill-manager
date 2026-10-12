@@ -30,6 +30,20 @@ func (p repositories) Acquire(ctx context.Context, key model.SourceKey, options 
 	return &entity.Repository{Key: key, RootPath: "/" + key.Path, FS: tree}, nil
 }
 
+// lineReader is a fake interfaces.SourceManifestReader: every line of a
+// manifest, "repository[ subpath,subpath]", is one local source.
+type lineReader struct{}
+
+func (lineReader) ReadSourceManifest(ctx context.Context, manifest model.SourceManifest) ([]model.SourceSpec, issues.ConfigIssues) {
+	var specs []model.SourceSpec
+	for _, line := range strings.Split(string(manifest.Content), "\n") {
+		if name, subpaths, _ := strings.Cut(line, " "); name != "" {
+			specs = append(specs, model.SourceSpec{Type: "local", Path: name, Subpaths: list(subpaths)})
+		}
+	}
+	return specs, nil
+}
+
 func list(s string) []string {
 	if s == "" {
 		return nil
@@ -42,12 +56,13 @@ func initialize(sc *godog.ScenarioContext) {
 	var req model.Request
 	var catalog *sourcing.SkillCatalog
 	var problems issues.SkillIssues
+	var manifests interfaces.SourceManifestReader
 
 	registerSyncSteps(sc, &trees, &req, &problems)
 	registerFeedbackSteps(sc)
 
 	sc.Before(func(ctx context.Context, s *godog.Scenario) (context.Context, error) {
-		trees, req, catalog, problems = map[string]fstest.MapFS{}, model.Request{}, nil, nil
+		trees, req, catalog, problems, manifests = map[string]fstest.MapFS{}, model.Request{}, nil, nil, nil
 		entity.SetDefaultLinkSearcher(links.NewDefaultLinkFactory())
 		return ctx, nil
 	})
@@ -78,6 +93,10 @@ func initialize(sc *godog.ScenarioContext) {
 		}
 		return nil
 	})
+	sc.Step(`^source manifests are read$`, func(ctx context.Context) error {
+		manifests = lineReader{}
+		return nil
+	})
 	sc.Step(`^add relations is "(true|false)"$`, func(ctx context.Context, v string) error {
 		req.AddRelations = v == "true"
 		return nil
@@ -89,7 +108,7 @@ func initialize(sc *godog.ScenarioContext) {
 
 	sc.Step(`^I fetch and validate skills$`, func(ctx context.Context) error {
 		manager := sourcing.NewManager(map[string]interfaces.SourceProvider{"local": repositories{trees: trees}}, "")
-		catalog, problems = handler.FetchAndValidateSkills(ctx, manager, req)
+		catalog, problems = handler.FetchAndValidateSkills(ctx, manager, manifests, req)
 		testsupport.Log("issues=%v", problems)
 		return nil
 	})

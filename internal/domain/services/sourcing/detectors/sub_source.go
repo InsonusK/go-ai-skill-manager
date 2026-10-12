@@ -60,7 +60,11 @@ func (d SubSource) Select(ctx context.Context, e sourcing.Entry) (sourcing.ScanR
 		}
 		return sourcing.ScanResult{}, problems
 	}
-	return sourcing.ScanResult{Sources: specs}, nil
+	listed := make([]sourcing.ListedSource, len(specs))
+	for i, spec := range specs {
+		listed[i] = sourcing.ListedSource{Spec: spec, ListedBy: e.Repo.Key, Manifest: e.Path}
+	}
+	return sourcing.ScanResult{Sources: listed}, nil
 }
 
 // IsValid has nothing to add: Reader checks the sources while reading.

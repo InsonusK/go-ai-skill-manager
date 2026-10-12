@@ -45,7 +45,16 @@ type ScanResult struct {
 	Skills []*entity.Skill
 	// Sources are the sources the source manifests list, a manifest's
 	// sources together, in the order written.
-	Sources []model.SourceSpec
+	Sources []ListedSource
+}
+
+// ListedSource is a source a source manifest lists.
+type ListedSource struct {
+	Spec model.SourceSpec
+	// ListedBy is the source the manifest lies in, Manifest the manifest's
+	// path from that source's repository folder.
+	ListedBy model.SourceKey
+	Manifest string
 }
 
 // add appends what other holds.

@@ -36,6 +36,7 @@ const (
 	CodePatternConflict Code = "pattern-conflict"
 	CodeInvalidManifest Code = "invalid-manifest"
 	CodeLocalSubSource  Code = "local-sub-source"
+	CodeConflictingTree Code = "conflicting-tree"
 
 	CodeInvalidLink       Code = "invalid-link"
 	CodeMissingLinkTarget Code = "missing-link-target"
@@ -78,6 +79,7 @@ var ids = map[Code]string{
 	CodePatternConflict: "E210",
 	CodeInvalidManifest: "E211",
 	CodeLocalSubSource:  "E212",
+	CodeConflictingTree: "E213",
 
 	CodeInvalidLink:       "E301",
 	CodeMissingLinkTarget: "E302",

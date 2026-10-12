@@ -141,3 +141,51 @@ Feature: FetchAndValidateSkills loads what the sources select and checks it
    [["missing-link-target","local:two","b","demo/page.md","[gone](./gone.md)"]]
    """
   And the catalog holds "one:a,two:b"
+
+ # Sources a source names itself (source manifests). The manifest reader
+ # here is a test one: a line "repository[ subpath,subpath]" is a source.
+
+ @category/happy
+ Scenario: Sources named in manifests are loaded and checked together with the configured ones
+  Given a repository "one" holding
+   """
+   {"a/SKILL.md":"---\nname: a\n---\n","skill-sources.yaml":"two\nthree x"}
+   """
+  And a repository "two" holding
+   """
+   {"a/SKILL.md":"---\nname: a\n---\n","b/SKILL.md":"---\nname: b\n---\n[gone](./gone.md)\n","b/examples/n/SKILL.md":"---\nname: n\n---\n"}
+   """
+  And a repository "three" holding
+   """
+   {"x/c/SKILL.md":"---\nname: c\n---\n","y/d/SKILL.md":"---\nname: d\n---\n"}
+   """
+  And the sources are
+   | repository | subpath | tags | exclude_from_checks |
+   | one        |         |      |                     |
+  And folders excluded from checks everywhere are "examples"
+  And source manifests are read
+  When I fetch and validate skills
+  Then the catalog holds "one:a,two:a,two:b,three:c"
+  And the issues are
+   """
+   [["missing-link-target","local:two","b","SKILL.md","[gone](./gone.md)"],
+    ["duplicate-name","local:one","a","",""],
+    ["duplicate-name","local:two","a","",""]]
+   """
+
+ @category/boundary
+ Scenario: Without a manifest reader the sources named in manifests are not loaded
+  Given a repository "one" holding
+   """
+   {"a/SKILL.md":"---\nname: a\n---\n","skill-sources.yaml":"two"}
+   """
+  And a repository "two" holding
+   """
+   {"b/SKILL.md":"---\nname: b\n---\n"}
+   """
+  And the sources are
+   | repository | subpath | tags | exclude_from_checks |
+   | one        |         |      |                     |
+  When I fetch and validate skills
+  Then there are no issues
+  And the catalog holds "one:a"
