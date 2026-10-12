@@ -1,8 +1,10 @@
+@type/domain
 Feature: LinkValidator checks that every link leads to an existing file and anchor in a loaded skill
 
  # Issues are listed as [Code, Source, Skill, SkillPath, File, Link]: File
  # is the path of the file holding the link from its skill's folder.
 
+ @category/happy
  Scenario: Valid links give no issues
   Given a source "repo" holding
    """
@@ -12,6 +14,7 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
   When I validate links
   Then there are no issues
 
+ @category/negative
  Scenario: Every broken link is reported with its skill and file
   Given a source "repo" holding
    """
@@ -29,6 +32,7 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
    """
   And issue 1 message contains "one/missing.md"
 
+ @category/happy
  Scenario: A link in a flat skill is checked from the skill's own file
   Given a source "repo" holding
    """
@@ -41,6 +45,7 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
    [["missing-link-target","local:repo","flat","flat.skill.md","flat.skill.md","[a](./missing.md)"]]
    """
 
+ @category/negative
  Scenario: A link to a skill that is not selected is an issue when add relations is off
   Given a source "repo" holding
    """
@@ -55,6 +60,7 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
    """
   And the loaded skills are "one"
 
+ @category/happy
  Scenario: A link to a skill that is not selected loads it when add relations is on
   Given a source "repo" holding
    """
@@ -66,6 +72,7 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
   Then there are no issues
   And the loaded skills are "one,two"
 
+ @category/happy
  Scenario: A skill loaded by a link is checked too, and so are the skills it loads
   Given a source "repo" holding
    """
@@ -89,17 +96,23 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
   And skills at "one" of source "repo" are selected
   When I validate links
   Then the issue codes are "<codes>"
-  Examples:
+  @category/happy
+  Examples: shared file
    | relations | link                          | codes            |
    | false     | [n](../shared/notes.md)       |                  |
    | true      | [n](../shared/notes.md)       |                  |
    | false     | [n](../shared/notes.md#top)   |                  |
+
+  @category/negative
+  Examples: missing anchor, folder, unselected skill
+   | relations | link                          | codes            |
    | false     | [n](../shared/notes.md#gone)  | missing-anchor   |
    | false     | [d](../shared/data.txt#top)   | missing-anchor   |
    | false     | [s](../shared)                | external-folder  |
    | true      | [s](../shared)                | external-folder  |
    | false     | [t](../two/SKILL.md)          | unselected-skill |
 
+ @category/happy
  Scenario: A shared file that holds links gets one warning listing them, whatever number of links lead to it
   Given a source "repo" holding
    """
@@ -119,6 +132,7 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
    ["[one](../one/SKILL.md)","[[two/SKILL.md|two]]","[web](https://example.com)"]
    """
 
+ @category/negative
  Scenario: A link to an invalid skill reports why that skill cannot be loaded
   Given a source "repo" holding
    """
@@ -139,7 +153,8 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
   And skills at "one" of source "repo" are selected
   When I validate links
   Then the issue codes are "<codes>"
-  Examples:
+  @category/happy
+  Examples: existing anchor
    | link                                       | codes          |
    | [g](./docs/guide.md#getting-started)       |                |
    | [g](./docs/guide.md#getting-started-1)     |                |
@@ -150,6 +165,10 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
    | [g](./docs/guide.md#top)                   |                |
    | [g](./docs/guide#getting-started)          |                |
    | [g](#intro)                                |                |
+
+  @category/negative
+  Examples: missing anchor
+   | link                                       | codes          |
    | [g](./docs/guide.md#getting-started-2)     | missing-anchor |
    | [g](./docs/guide.md#hidden)                | missing-anchor |
    | [g](./docs/guide.md#nothing)               | missing-anchor |
@@ -157,6 +176,7 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
    | [g](#outro)                                | missing-anchor |
    | [g](./docs/data.txt#data)                  | missing-anchor |
 
+ @category/boundary
  Scenario: Links in folders excluded from checks and in non-markdown files are not checked
   Given a source "repo" holding
    """

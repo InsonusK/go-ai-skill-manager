@@ -1,3 +1,4 @@
+@type/service
 Feature: Sync loads the skills, transforms them for each target, plans every target, then writes
 
  # Written targets are listed as "{skill}/{file}" -> content; the marker
@@ -13,6 +14,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
    | repository | subpath | tags | exclude_from_checks |
    | repo       |         |      |                     |
 
+ @category/happy
  Scenario: Every target gets the flat layout, its own transformers and the marker
   Given a target "agents" at "/p/.agents/skills" with adapters ""
   And a target "claude" at "/p/.claude/skills" with adapters "claude-property-adapter"
@@ -41,6 +43,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
     "h/.ai-skills-managed":"{\n  \"source\": {\n    \"type\": \"local\",\n    \"path\": \"repo\"\n  },\n  \"skill_path\": \"h.skill\",\n  \"transformers\": [\n    \"flat\"\n  ],\n  \"version\": \"go-3\"\n}\n"}
    """
 
+ @category/happy
  Scenario: Each target is planned against what its folder holds
   Given a target "agents" at "/p/.agents/skills" with adapters ""
   And the target folder "/p/.agents/skills" holds
@@ -56,6 +59,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
    {"/p/.agents/skills":[["update","guide"],["create","h"],["remove","old"]]}
    """
 
+ @category/happy
  Scenario: A dry run plans every target and writes nothing
   Given a target "agents" at "/p/.agents/skills" with adapters ""
   And it is a dry run
@@ -67,6 +71,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
    """
   And the written targets are ""
 
+ @category/negative
  Scenario: A folder this tool didn't write in one target stops writing every target
   Given a target "agents" at "/p/.agents/skills" with adapters ""
   And a target "claude" at "/p/.claude/skills" with adapters "claude-property-adapter"
@@ -80,6 +85,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
    """
   And the written targets are ""
 
+ @category/error
  Scenario: A target folder that can't be read stops writing every target
   Given a target "agents" at "/p/.agents/skills" with adapters ""
   And a target "claude" at "/p/.claude/skills" with adapters ""
@@ -88,6 +94,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
   Then sync fails with "state unavailable"
   And the written targets are ""
 
+ @category/negative
  Scenario: Skill problems stop sync before any target work
   Given a repository "broken" holding
    """
@@ -106,6 +113,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
    """
   And the written targets are ""
 
+ @category/happy
  Scenario: Warnings don't stop sync: every target is written and each warning is returned once
   Given a repository "warn" holding
    """
@@ -125,6 +133,7 @@ Feature: Sync loads the skills, transforms them for each target, plans every tar
     ["when-to-use-both","local:warn","w",""]]
    """
 
+ @category/negative
  Scenario: An error stops sync and is returned with the warnings found before it
   Given a repository "bad" holding
    """

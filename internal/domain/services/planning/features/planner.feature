@@ -1,5 +1,7 @@
+@type/domain
 Feature: Plan decides what a sync does with each skill folder of a target
 
+ @category/happy
  Scenario: A missing folder is created, a folder with the marker is updated, a marked orphan is removed
   Given the skills to write are "guide,review"
   And the target holds
@@ -19,6 +21,7 @@ Feature: Plan decides what a sync does with each skill folder of a target
    []
    """
 
+ @category/happy
  Scenario: Orphans are kept unless asked to remove them
   Given the skills to write are "guide"
   And the target holds
@@ -31,6 +34,7 @@ Feature: Plan decides what a sync does with each skill folder of a target
    [["create","guide","guide"]]
    """
 
+ @category/negative
  Scenario: A folder of a skill's name that this tool didn't write is an issue, the rest is still planned
   Given the skills to write are "guide,review"
   And the target holds

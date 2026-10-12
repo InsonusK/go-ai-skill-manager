@@ -1,8 +1,10 @@
+@type/service
 Feature: FetchAndValidateSkills loads what the sources select and checks it
 
  # The catalog is listed as repository:skill in load order; issues as
  # [Code, Source, Skill, File, Link].
 
+ @category/happy
  Scenario: Valid sources give a catalog of the selected skills and no issues
   Given a repository "one" holding
    """
@@ -21,6 +23,7 @@ Feature: FetchAndValidateSkills loads what the sources select and checks it
   Then there are no issues
   And the catalog holds "one:a,one:b,two:d"
 
+ @category/negative
  Scenario: Problems of several sources are all reported, the valid skills are still loaded
   Given a repository "nested" holding
    """
@@ -45,6 +48,7 @@ Feature: FetchAndValidateSkills loads what the sources select and checks it
    """
   And the catalog holds "nested:ok,links:b"
 
+ @category/negative
  Scenario: Without add relations a link to a skill no source selects is an issue
   Given a repository "one" holding
    """
@@ -61,6 +65,7 @@ Feature: FetchAndValidateSkills loads what the sources select and checks it
    """
   And the catalog holds "one:a"
 
+ @category/happy
  Scenario: With add relations the linked skill is loaded and checked too
   Given a repository "one" holding
    """
@@ -77,8 +82,8 @@ Feature: FetchAndValidateSkills loads what the sources select and checks it
    """
   And the catalog holds "one:a,one:b"
 
- # Tags are not applied yet (see AGENTS.md): back when the tag filter is.
- @todo
+ # todo: tags are not applied yet (see AGENTS.md); back when the tag filter is
+ @status/todo @category/happy
  Scenario: A skill the tags reject is not loaded: it is neither checked nor a relation without add relations
   Given a repository "one" holding
    """
@@ -94,6 +99,7 @@ Feature: FetchAndValidateSkills loads what the sources select and checks it
    """
   And the catalog holds "one:a"
 
+ @category/negative
  Scenario: The same skill name in two sources is reported for each of them
   Given a repository "one" holding
    """
@@ -114,6 +120,7 @@ Feature: FetchAndValidateSkills loads what the sources select and checks it
     ["duplicate-name","local:two","guide","",""]]
    """
 
+ @category/happy
  Scenario: Folders excluded everywhere and by a source add up, per source
   Given a repository "one" holding
    """

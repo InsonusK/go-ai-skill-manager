@@ -1,5 +1,7 @@
+@type/domain
 Feature: Manager runs validators in their registered order and collects every issue
 
+ @category/happy
  Scenario: Every validator runs, even after an earlier one found issues, and all issues are returned in order
   Given fake validator "a" depending on "" (optional) reports "a1,a2"
   And fake validator "b" depending on "a" (required) reports "b1"
@@ -10,6 +12,7 @@ Feature: Manager runs validators in their registered order and collects every is
   Then the validators ran in order "a,b,c"
   And the issue codes are "a1,a2,b1"
 
+ @category/negative
  Scenario Outline: A registration order that breaks a dependency is refused
   Given fake validator "a" depending on "" (optional) reports ""
   And fake validator "b" depending on "a" (<kind>) reports ""
@@ -22,6 +25,7 @@ Feature: Manager runs validators in their registered order and collects every is
    | optional | b,a   | validator "a" must be registered before "b", which depends on it |
    | optional | a,a   | validator "a" is registered twice                            |
 
+ @category/happy
  Scenario Outline: A registration order that keeps every dependency is accepted
   Given fake validator "a" depending on "" (optional) reports ""
   And fake validator "b" depending on "a" (<kind>) reports ""
@@ -33,6 +37,7 @@ Feature: Manager runs validators in their registered order and collects every is
    | optional | a,b   |
    | optional | b     |
 
+ @category/negative
  Scenario: Every broken dependency is reported at once
   Given fake validator "a" depending on "" (optional) reports ""
   And fake validator "b" depending on "a,c" (required) reports ""

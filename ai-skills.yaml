@@ -5,11 +5,13 @@ sources:
     subpath:
       - skills/common-workflow/architecture/core
       - skills/common-workflow/develop
-      - skills/common-workflow/test
       - skills/common-workflow/documentation
+      - skills/design
       - skills/devops
-      - skills/go/devops
-      - skills/go/test
+      - skills/devops/core
+      - skills/devops/go
+      - skills/testing/core
+      - skills/testing/go
       - skills/go/architecture/plateau/plateau-http-service
       
 target:

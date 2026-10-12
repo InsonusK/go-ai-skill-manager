@@ -1,3 +1,4 @@
+@type/service
 Feature: Feedback about a skill goes to its source's issue tracker only as the user confirmed it
 
  # Drafts are compared as {ID, Status, Kind, Skill, Source, Commit,
@@ -14,6 +15,7 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
   And the feedback targets are "/p/.claude/skills,/p/.agents/skills"
   And it is "2026-09-27T10:00:00Z"
 
+ @category/happy
  Scenario: A draft takes the skill's source from the first target holding it and shows the issue it would open
   When I draft a "bug" feedback on "guide" titled "Broken anchor" with body "The anchor #x is missing."
   Then the feedback succeeds
@@ -33,6 +35,7 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
    []
    """
 
+ @category/happy
  Scenario: An improvement is labeled enhancement
   When I draft an "improvement" feedback on "guide" titled "Add an example" with body "An example of X would help."
   Then the shown issue is
@@ -41,12 +44,14 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
     "body":"An example of X would help.\n\n---\nSkill: `guide` (`a/guide` at commit `c0ffee`)\nSource: github https://github.com/o/r (tree `main`)\nSent with ai-skill-manager 1.2.0\n"}
    """
 
+ @category/boundary
  Scenario: Drafts of the same day and title get free ids; a title without latin letters gives no slug
   When I draft a "bug" feedback on "guide" titled "Broken anchor" with body "a"
   And I draft a "bug" feedback on "guide" titled "Broken anchor" with body "b"
   And I draft a "bug" feedback on "guide" titled "Сломан якорь" with body "c"
   Then the drafts are "2026-09-27-guide,2026-09-27-guide-broken-anchor,2026-09-27-guide-broken-anchor-2"
 
+ @category/negative
  Scenario Outline: A draft is refused for <case>
   When I draft a "<kind>" feedback on "<skill>" titled "<title>" with body "<body>"
   Then the feedback fails with "<error>"
@@ -61,6 +66,7 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
    | an empty title            | bug      | guide   |       | B    | feedback title is empty                                       |
    | an empty body             | bug      | guide   | T     |      | feedback body is empty                                        |
 
+ @category/happy
  Scenario: Sending with the shown hash opens the issue and marks the draft sent
   Given I draft a "bug" feedback on "guide" titled "Broken anchor" with body "The anchor #x is missing."
   And it is "2026-09-27T10:05:00Z"
@@ -80,6 +86,7 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
     "CreatedAt":"2026-09-27T10:00:00Z","SentAt":"2026-09-27T10:05:00Z"}
    """
 
+ @category/negative
  Scenario: A hash other than the shown one sends nothing
   Given I draft a "bug" feedback on "guide" titled "Broken anchor" with body "x"
   When I send "2026-09-27-guide-broken-anchor" with hash "0000"
@@ -89,6 +96,7 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
    []
    """
 
+ @category/negative
  Scenario: A draft edited after it was shown is sent only after it is shown again
   Given I draft a "bug" feedback on "guide" titled "Broken anchor" with body "x"
   And the user edits the body of "2026-09-27-guide-broken-anchor" to "edited"
@@ -104,6 +112,7 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
       "body":"edited\n\n---\nSkill: `guide` (`a/guide` at commit `c0ffee`)\nSource: github https://github.com/o/r (tree `main`)\nSent with ai-skill-manager 1.2.0\n"}}]
    """
 
+ @category/negative
  Scenario: A draft edited to an empty body is not sent even with its own hash
   Given I draft a "bug" feedback on "guide" titled "Broken anchor" with body "x"
   And the user edits the body of "2026-09-27-guide-broken-anchor" to " "
@@ -111,12 +120,14 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
   When I send "2026-09-27-guide-broken-anchor" with the shown hash
   Then the feedback fails with "feedback body is empty"
 
+ @category/negative
  Scenario: A sent draft is not sent again
   Given I draft a "bug" feedback on "guide" titled "Broken anchor" with body "x"
   And I send "2026-09-27-guide-broken-anchor" with the shown hash
   When I send "2026-09-27-guide-broken-anchor" with the shown hash
   Then the feedback fails with "feedback 2026-09-27-guide-broken-anchor is already sent"
 
+ @category/negative
  Scenario: A declined draft stays as a trace and can't be sent
   Given I draft a "bug" feedback on "guide" titled "Broken anchor" with body "x"
   When I decline "2026-09-27-guide-broken-anchor"
@@ -129,6 +140,7 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
    []
    """
 
+ @category/happy
  Scenario: Pending feedback is the drafts neither sent nor declined, by id
   Given I draft a "bug" feedback on "guide" titled "C" with body "x"
   And I draft a "bug" feedback on "guide" titled "A" with body "x"
@@ -141,11 +153,13 @@ Feature: Feedback about a skill goes to its source's issue tracker only as the u
   Then the feedback succeeds
   And the pending feedback is "2026-09-27-guide-a,2026-09-27-guide-c"
 
+ @category/boundary
  Scenario: Without drafts nothing is pending
   When I ask for the pending feedback
   Then the feedback succeeds
   And the pending feedback is ""
 
+ @category/error
  Scenario: A tracker failure leaves the draft a draft
   Given I draft a "bug" feedback on "guide" titled "Broken anchor" with body "x"
   And the tracker fails with "401 Bad credentials"

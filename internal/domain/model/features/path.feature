@@ -1,5 +1,7 @@
+@type/domain
 Feature: PathInRepo converts a path inside a repository between its written forms
 
+ @category/happy
  Scenario Outline: A written path's form is detected from how it starts
   Then the written path "<path>" is detected as "<kind>"
   Examples:
@@ -14,6 +16,7 @@ Feature: PathInRepo converts a path inside a repository between its written form
    | b               | repo-absolute |
    | .hidden/b.md    | repo-absolute |
 
+ @category/happy
  Scenario Outline: A path read in one form is written in every other form
   When I read the path "<path>" written as "<kind>" from "<base>" in repository "/src"
   Then the path written as "os-absolute" from "" is "<os>"
@@ -31,10 +34,12 @@ Feature: PathInRepo converts a path inside a repository between its written form
    | /src             | os-absolute    |        | /src              | .           | ../..         | ..           |
    | a/docs           | repo-absolute  |        | /src/a/docs       | a/docs      | .             | docs         |
 
+ @category/happy
  Scenario: A skill-relative path of a skill at the repository folder is its repository path
   When I read the path "a/b.md" written as "repo-absolute" from "" in repository "/src"
   Then the path written as "skill-relative" from "" is "a/b.md"
 
+ @category/security
  Scenario Outline: A path leaving the repository is refused
   When I read the path "<path>" written as "<kind>" from "<base>" in repository "/src"
   Then reading the path fails with "path-escape"
@@ -47,10 +52,12 @@ Feature: PathInRepo converts a path inside a repository between its written form
    | ../a.md       | repo-absolute |      |
    | /a.md         | os-absolute   |      |
 
+ @category/negative
  Scenario: An OS path cannot be read against a repository without a known folder
   When I read the path "/src/a.md" written as "os-absolute" from "" in repository ""
   Then reading the path fails with "path-escape"
 
+ @category/negative
  Scenario: An unknown form is refused both ways
   When I read the path "a.md" written as "web" from "" in repository "/src"
   Then reading the path fails with "unknown path kind"

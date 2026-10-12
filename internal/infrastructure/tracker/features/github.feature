@@ -1,5 +1,7 @@
+@type/infrastructure/client/http
 Feature: GitHub opens an issue in the repository of a source through the REST API
 
+ @category/happy
  Scenario Outline: The issue is opened in the repository the source URL names (<form>)
   Given GitHub answers 201 with
    """
@@ -19,6 +21,7 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
    | .git  | https://github.com/o/r.git |
    | ssh   | git@github.com:o/r.git    |
 
+ @category/negative
  Scenario: A source that isn't a GitHub repository sends nothing
   When I open an issue titled "T" with body "B" and labels "bug" in "https://gitlab.com/o/r"
   Then opening fails with "not a GitHub repository URL"
@@ -27,6 +30,7 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
    []
    """
 
+ @category/error
  Scenario: No token sends nothing and tells how to get one
   Given the token is ""
   When I open an issue titled "T" with body "B" and labels "bug" in "https://github.com/o/r"
@@ -36,6 +40,7 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
    []
    """
 
+ @category/error
  Scenario: A token that can't be read sends nothing
   Given the token can't be read: "gh: not logged in"
   When I open an issue titled "T" with body "B" and labels "bug" in "https://github.com/o/r"
@@ -45,6 +50,7 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
    []
    """
 
+ @category/error
  Scenario: A refusal is reported with GitHub's message
   Given GitHub answers 410 with
    """
@@ -53,6 +59,7 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
   When I open an issue titled "T" with body "B" and labels "bug" in "https://github.com/o/r"
   Then opening fails with "GitHub issue in o/r: HTTP 410: Issues are disabled for this repo"
 
+ @category/error
  Scenario: An answer without the issue's page is an error
   Given GitHub answers 201 with
    """
@@ -61,6 +68,7 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
   When I open an issue titled "T" with body "B" and labels "bug" in "https://github.com/o/r"
   Then opening fails with "no html_url in the answer"
 
+ @category/error
  Scenario Outline: A refusal to see or write the repository points at the token setup (<code>)
   Given GitHub answers <code> with
    """
@@ -75,6 +83,7 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
    | 403  | Resource not accessible by integration |
    | 404  | Not Found                              |
 
+ @category/happy
  Scenario Outline: The token is looked up as gh does: GH_TOKEN, GITHUB_TOKEN, then gh (<case>)
   Given the environment has GH_TOKEN="<gh_token>"
   And the environment has GITHUB_TOKEN="<github_token>"
@@ -88,11 +97,13 @@ Feature: GitHub opens an issue in the repository of a source through the REST AP
    | then GITHUB_TOKEN |        | github-env   | github-env  |
    | then gh         |          |              | from-gh     |
 
+ @category/error
  Scenario: Without gh and a variable the error tells both ways
   Given gh isn't installed
   When I look for the GitHub token
   Then looking for the token fails with "no GitHub token: install gh and run gh auth login, or set GH_TOKEN (see docs/feedback.md)"
 
+ @category/error
  Scenario: A gh that isn't logged in is reported with its message
   Given gh fails with "no oauth token found for github.com"
   When I look for the GitHub token

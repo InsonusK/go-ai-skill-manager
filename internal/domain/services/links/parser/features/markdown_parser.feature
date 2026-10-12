@@ -1,6 +1,8 @@
+@type/domain
 Feature: MarkdownParser finds and parses markdown links
 
  # Gherkin table cells unescape "\|" to "|" and "\\" to "\".
+ @category/happy
  Scenario Outline: Parse a raw markdown link
   When I parse the markdown link <raw>
   Then the parsed link has text "<text>" path "<path>" fragment "<fragment>" image <image>
@@ -16,6 +18,7 @@ Feature: MarkdownParser finds and parses markdown links
    | [see [x] here](a.md)              | see [x] here        | a.md                |          | false |
    | [![build](badge.svg)](docs/ci.md) | ![build](badge.svg) | docs/ci.md          |          | false |
 
+ @category/negative
  Scenario Outline: Parse rejects text that is not exactly one markdown link
   When I parse the markdown link <raw>
   Then parsing fails with "invalid-link"
@@ -28,6 +31,7 @@ Feature: MarkdownParser finds and parses markdown links
    | [unbalanced [x](a.md) |
    | [a](b.md              |
 
+ @category/happy
  Scenario: Find returns markdown spans
   When I find markdown links in
    """
@@ -38,6 +42,7 @@ Feature: MarkdownParser finds and parses markdown links
    [[0,19],[25,38]]
    """
 
+ @category/happy
  Scenario: Find returns a link whose label holds brackets as one span
   When I find markdown links in
    """
@@ -48,6 +53,7 @@ Feature: MarkdownParser finds and parses markdown links
    [[0,20]]
    """
 
+ @category/happy
  Scenario: Find returns both a linked image and the link around it
   When I find markdown links in
    """
@@ -58,6 +64,7 @@ Feature: MarkdownParser finds and parses markdown links
    [[0,33],[1,20]]
    """
 
+ @category/happy
  Scenario: Find ignores wikilinks and plain text
   When I find markdown links in
    """

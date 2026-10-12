@@ -5,7 +5,9 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/go:2-1.27-trixie",
 	"features": {
-		"ghcr.io/devcontainers/features/github-cli:1": {}
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		// Node 22+ and npm: tools/livingdoc renders the living doc of the test report.
+		"ghcr.io/devcontainers/features/node:1": {"version": "22"}
 	},
 	"customizations": {"vscode": {"extensions": [
 				"golang.go",

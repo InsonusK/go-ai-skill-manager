@@ -1,5 +1,7 @@
+@type/domain
 Feature: ExampleFence hides fenced code blocks tagged "example"
 
+ @category/happy
  Scenario: A backtick example block is hidden with its fence lines
   When I search example fences in
    """
@@ -14,6 +16,7 @@ Feature: ExampleFence hides fenced code blocks tagged "example"
    [[2,24]]
    """
 
+ @category/happy
  Scenario: A tilde example block is hidden
   When I search example fences in
    """
@@ -28,6 +31,7 @@ Feature: ExampleFence hides fenced code blocks tagged "example"
    [[2,24]]
    """
 
+ @category/happy
  Scenario: Untagged and other-tagged blocks are not hidden
   When I search example fences in
    """
@@ -43,6 +47,7 @@ Feature: ExampleFence hides fenced code blocks tagged "example"
    []
    """
 
+ @category/boundary
  Scenario: An unclosed example block is hidden up to the end of content
   When I search example fences in
    """
@@ -55,6 +60,7 @@ Feature: ExampleFence hides fenced code blocks tagged "example"
    [[2,19]]
    """
 
+ @category/happy
  Scenario: A fence indented by four spaces is not a fence
   When I search example fences in
    """
@@ -67,6 +73,7 @@ Feature: ExampleFence hides fenced code blocks tagged "example"
    []
    """
 
+ @category/happy
  Scenario: A shorter fence line does not close a longer opening fence
   When I search example fences in
    """
@@ -81,6 +88,7 @@ Feature: ExampleFence hides fenced code blocks tagged "example"
    [[0,28]]
    """
 
+ @category/happy
  Scenario: A fence line with an info string does not close the block
   When I search example fences in
    """
@@ -95,6 +103,7 @@ Feature: ExampleFence hides fenced code blocks tagged "example"
    [[0,30]]
    """
 
+ @category/happy
  Scenario: Mask blanks the example block and keeps newlines and offsets
   When I mask example fences in
    """

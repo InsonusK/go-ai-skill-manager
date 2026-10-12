@@ -1,4 +1,6 @@
+@type/domain
 Feature: YAML frontmatter
+ @category/happy
  Scenario: Round trip preserves properties and body
   Given a document
    """
@@ -15,6 +17,7 @@ Feature: YAML frontmatter
    """
    {"name":"sample","tags":["go","cli"],"custom":"Привет","body":"# Body\nSome content."}
    """
+ @category/boundary
  Scenario: Documents without frontmatter remain text
   Given a document
    """
@@ -25,6 +28,7 @@ Feature: YAML frontmatter
    """
    {"body":"# Text"}
    """
+ @category/negative
  Scenario: Malformed frontmatter is rejected
   Given a document
    """

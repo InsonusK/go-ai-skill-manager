@@ -1,5 +1,7 @@
+@type/domain
 Feature: Access a skill through the Skill contract
 
+ @category/happy
  Scenario: Key combines repository and main-file identity
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -11,6 +13,7 @@ Feature: Access a skill through the Skill contract
    "local:repo\u0000skills/guide/SKILL.md"
    """
 
+ @category/happy
  Scenario: Metadata returns the skill metadata
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -22,6 +25,7 @@ Feature: Access a skill through the Skill contract
    {"name":"guide","mainFilePath":"skills/guide/SKILL.md","skillDirPath":"skills/guide","format":"agent-dir","repositoryId":"local:repo","repositoryRoot":"/source"}
    """
 
+ @category/happy
  Scenario: FilesByPath lists every nested file under the skill root
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -33,6 +37,7 @@ Feature: Access a skill through the Skill contract
    ["docs/intro.md","examples/demo.txt"]
    """
 
+ @category/happy
  Scenario: FilesByPath limits traversal to the requested subtree
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -44,6 +49,7 @@ Feature: Access a skill through the Skill contract
    ["docs/intro.md"]
    """
 
+ @category/boundary
  Scenario: FilesByPath returns immediately for a flat skill
   Given a "flat" skill "guide" rooted at "" with main file "guide.skill.md" in repository "/source" and files
    """
@@ -56,6 +62,7 @@ Feature: Access a skill through the Skill contract
    """
   And the repository open count is 1
 
+ @category/happy
  Scenario: FilesByPath skips Git metadata
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -67,6 +74,7 @@ Feature: Access a skill through the Skill contract
    ["docs/intro.md"]
    """
 
+ @category/boundary
  Scenario: FilesByPath handles a dot skill root
   Given an "agent-dir" skill "guide" rooted at "." with main file "SKILL.md" in repository "/source" and files
    """
@@ -78,6 +86,7 @@ Feature: Access a skill through the Skill contract
    ["docs/intro.md"]
    """
 
+ @category/happy
  Scenario: FilesByPath caches each requested path
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -88,6 +97,7 @@ Feature: Access a skill through the Skill contract
   When I list skill files at path "docs"
   Then the repository open count has not increased
 
+ @category/happy
  Scenario: FilesByPath caches distinct paths independently
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -111,6 +121,7 @@ Feature: Access a skill through the Skill contract
    """
   And the repository open count has not increased
 
+ @category/happy
  Scenario: FilesByPath treats nested markers as ordinary files
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -122,6 +133,7 @@ Feature: Access a skill through the Skill contract
    ["examples/SKILL.md","examples/legacy.skill.md"]
    """
 
+ @category/happy
  Scenario: FilesByPath filters cached paths by regular expression
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -140,6 +152,7 @@ Feature: Access a skill through the Skill contract
    """
   And the repository open count has not increased
 
+ @category/error
  Scenario: FilesByPath surfaces traversal errors
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -148,6 +161,7 @@ Feature: Access a skill through the Skill contract
   When I list skill files at path "missing"
   Then listing skill files fails with filesystem error "not-exist"
 
+ @category/boundary
  Scenario: FilesByPath allows paths outside the skill root but inside the repository
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -159,6 +173,7 @@ Feature: Access a skill through the Skill contract
    ["../../shared/reference.md"]
    """
 
+ @category/security
  Scenario: FilesByPath rejects paths outside the repository root
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """
@@ -167,6 +182,7 @@ Feature: Access a skill through the Skill contract
   When I list skill files at path "../../../outside"
   Then listing skill files fails with filesystem error "invalid-path"
 
+ @category/negative
  Scenario: Construction fails when the main file has no name property
   Given an "agent-dir" skill "guide" rooted at "skills/guide" with main file "skills/guide/SKILL.md" in repository "/source" and files
    """

@@ -1,7 +1,9 @@
+@type/infrastructure/file
 Feature: Store writes a plan into a target folder and reads what the folder holds
 
  # The target is listed as path from the target folder -> content.
 
+ @category/happy
  Scenario: A created skill folder has every file of the skill, the marker included, with their modes
   Given an empty target
   And a skill to write with files
@@ -18,6 +20,7 @@ Feature: Store writes a plan into a target folder and reads what the folder hold
   And target file "sample/run.sh" has mode "775"
   And target file "sample/docs/x.md" has mode "644"
 
+ @category/happy
  Scenario: An update replaces the folder as a whole, files the skill no longer has go away
   Given an empty target
   And a skill to write with files
@@ -33,6 +36,7 @@ Feature: Store writes a plan into a target folder and reads what the folder hold
    {"sample/SKILL.md":"---\nname: sample\n---\nnew\n","sample/.ai-skills-managed":"{}\n"}
    """
 
+ @category/happy
  Scenario: A managed folder is removed, one without the marker is not
   Given an empty target
   And target fixture file "old/.ai-skills-managed" contains "{}"
@@ -44,6 +48,7 @@ Feature: Store writes a plan into a target folder and reads what the folder hold
   Then applying fails with "unmanaged target manual"
   And target path "manual" exists "true"
 
+ @category/negative
  Scenario Outline: A folder this tool didn't write is never replaced, whatever the plan says
   Given an empty target
   And a skill to write with files
@@ -62,6 +67,7 @@ Feature: Store writes a plan into a target folder and reads what the folder hold
    | create |
    | update |
 
+ @category/negative
  Scenario Outline: A plan is checked before anything is written
   Given an empty target
   And <skill> skill to write with files
@@ -80,6 +86,7 @@ Feature: Store writes a plan into a target folder and reads what the folder hold
    | a           | a/b       | unsafe or duplicate       |
    | an unmarked | sample    | has no .ai-skills-managed |
 
+ @category/security
  Scenario: A target folder reached through a symlink is refused
   Given an empty target
   And a skill to write with files
@@ -89,6 +96,7 @@ Feature: Store writes a plan into a target folder and reads what the folder hold
   When I apply "create" for "sample" into a target reached through a symlink
   Then applying fails with "unsafe target symlink"
 
+ @category/happy
  Scenario: The snapshot tells every entry apart: a managed folder, any other folder, a file, a symlink, a folder whose marker isn't a file
   Given an empty target
   And target fixture file "managed/.ai-skills-managed" contains "{}"
@@ -102,6 +110,7 @@ Feature: Store writes a plan into a target folder and reads what the folder hold
    {"managed":[true,true],"manual":[true,false],"file":[true,false],"link":[true,false],"fake":[true,false]}
    """
 
+ @category/boundary
  Scenario: A target folder that doesn't exist yet holds nothing
   Given an empty target
   When I take a snapshot of the target folder that doesn't exist

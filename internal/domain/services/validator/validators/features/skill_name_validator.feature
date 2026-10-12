@@ -1,7 +1,9 @@
+@type/domain
 Feature: SkillNameValidator checks that no two loaded skills share a name
 
  # Issues are listed as [Code, Source, Skill, SkillPath, File, Link].
 
+ @category/happy
  Scenario: Unique names give no issues
   Given a source "a" holding
    """
@@ -11,6 +13,7 @@ Feature: SkillNameValidator checks that no two loaded skills share a name
   When I validate skill names
   Then there are no issues
 
+ @category/negative
  Scenario: The same name in two sources is reported once for each skill
   Given a source "a" holding
    """
@@ -33,6 +36,7 @@ Feature: SkillNameValidator checks that no two loaded skills share a name
   And issue 1 message contains "also defined at local:b x/guide"
   And issue 2 message contains "also defined at local:a guide"
 
+ @category/negative
  Scenario: The same name twice in one source, one of them a flat skill
   Given a source "a" holding
    """
@@ -49,6 +53,7 @@ Feature: SkillNameValidator checks that no two loaded skills share a name
    ]
    """
 
+ @category/negative
  Scenario: A duplicate loaded while following links is found when links are validated first
   Given a source "a" holding
    """
@@ -65,9 +70,14 @@ Feature: SkillNameValidator checks that no two loaded skills share a name
  Scenario Outline: skill-name-validator may run without link-validator, but never before it
   When I register validators "<order>"
   Then <result>
-  Examples:
+  @category/happy
+  Examples: accepted
    | order                               | result                                                                                   |
    | link-validator,skill-name-validator | registration succeeds                                                                    |
    | skill-name-validator                | registration succeeds                                                                    |
    | link-validator                      | registration succeeds                                                                    |
+
+  @category/negative
+  Examples: refused
+   | order                               | result                                                                                   |
    | skill-name-validator,link-validator | registration fails with "validator "link-validator" must be registered before "skill-name-validator"" |

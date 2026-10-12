@@ -666,7 +666,7 @@ master или запустить workflow вручную.
 Чтобы теги не игнорировались молча, валидатор конфига отказывает
 источнику с `tags` (`unsupported-tags-validator`, код `unsupported-tags`);
 `tags-validator` (синтаксис) остаётся зарегистрированным. Когда фильтр
-вернётся — удалить `unsupported-tags-validator`, снять `@todo` со
+вернётся — удалить `unsupported-tags-validator`, снять `@status/todo` со
 сценариев с тегами (selector, handler).
 Требование: после `FetchAndValidateSkills` в каталоге только скилы,
 прошедшие фильтры пути **и** тегов, плюс связанные при `add_relations`;
@@ -703,6 +703,41 @@ master или запустить workflow вручную.
 | `ownsPath` | лежит ли путь в папке скила | `skillContainsPath` |
 
 `Skill.SkillDirPath` — конкретное, оставить.
+
+## Текущая задача: тесты и CI по обновлённым скилам (`concern/testing`) ⏳
+
+Решение пользователя: брать целиком, включая CI (три workflow → два, новые
+адреса опубликованного отчёта `…/testing/`).
+
+Теги сценариев (`cucumber-testing`): на `Feature:` ровно один `@type/…`,
+на сценарии или блоке `Examples:` ровно один `@category/…` (`happy`,
+`boundary`, `negative`, `error`, `concurrency`, `security`, `regression`);
+таблица, где смешаны допустимые и недопустимые строки, делится на блоки
+`Examples:` со своим тегом. Не запускаемый сценарий — `@status/todo` /
+`@status/broken` и строкой выше `# todo: …` / `# broken: …`; фильтр —
+в `tools/testsupport/suite.go`. `@status/validated` ставит только человек.
+Типы по пакетам: `command`, `test/conformance` — `api/cli`; `config` —
+`mapping`; `config/validator`, `entity`, `model`, `links`, `planning`,
+`tags`, `transformers`, `validator` — `domain`; `handler`, `selector`,
+`sourcing`, `transform` (конвейер) — `service`; `filesystem` —
+`infrastructure/file`; `tracker`, `repository.feature` —
+`infrastructure/client/http`; `logging`, `profiling`, архитектура —
+`tech-check`. Двух значений в таблице скила нет, их надо добавить в
+`tools/testing/tags.json` на шаге 2: `api/mcp` (`mcpserver`) и
+`infrastructure/client/git` (`git.feature`).
+
+Шаги (после каждого — стоп):
+1. ✅ Теги `@type`/`@category`/`@status` во всех `.feature`, фильтр раннера.
+2. Контракт `tools/testing/` + `tools/livingdoc/` из assets скилов,
+   `normalize_*`, `CUCUMBER_JSON_DIR` в раннере, `report-template`,
+   `.gitignore`, `go.mod`, Makefile (`include`, убрать свои рецепты и
+   `tools/test_report`), Node 22+ в devcontainer.
+3. CI: `check-changes` (`ci`), `setup-toolchain`, `tools/version/`
+   (`make version`, `version-check`), `make init`, action `release`
+   (`devops-release-binaries-in-go`), `pull-request.yml` и `release.yml` из
+   assets, бейджи README; удалить `release-info-publish.yml`,
+   `release-test-report.yml`, `check-version`; раздел «CI и релизы» —
+   переписать.
 
 ## Текущая задача: структурный вывод и номера проблем ⏳
 

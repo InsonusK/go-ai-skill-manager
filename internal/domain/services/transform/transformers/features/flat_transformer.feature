@@ -1,7 +1,9 @@
+@type/domain
 Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites links to match
 
  # The target is listed as "{skill dir}/{file path}" -> content.
 
+ @category/happy
  Scenario: Every format of skill becomes a folder named after it with SKILL.md
   Given a repository "repo" holding
    """
@@ -23,6 +25,7 @@ Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites lin
    [["guide","guide","guide/SKILL.md","agent-dir"],["f","f","f/SKILL.md","agent-dir"],["h","h","h/SKILL.md","agent-dir"]]
    """
 
+ @category/happy
  Scenario Outline: A link is rewritten to lead to the same file at its new place
   Given a repository "repo" holding
    """
@@ -57,6 +60,7 @@ Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites lin
    | [the `i` file](a/b/guide/docs/i.png)                | [the `i` file](../guide/docs/i.png)         |
    | [[a/b/guide/docs/x.md\|`X`]]                        | [`X`](../guide/docs/x.md)                   |
 
+ @category/boundary
  Scenario Outline: A link that already leads to the right place, a web link and an anchor stay as written
   Given a repository "repo" holding
    """
@@ -76,6 +80,7 @@ Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites lin
    | [w](https://example.com/a) |
    | [t](#top)                  |
 
+ @category/happy
  Scenario: Links of skills in two repositories stay in their own repository
   Given a repository "one" holding
    """
@@ -95,6 +100,7 @@ Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites lin
     "two/SKILL.md":"---\nname: two\n---\n[d](./docs/d.md)\n","two/docs/d.md":"[back](../SKILL.md)\n"}
    """
 
+ @category/happy
  Scenario: Files excluded from checks and non-markdown files keep their links as written
   Given a repository "repo" holding
    """
@@ -109,6 +115,7 @@ Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites lin
    {"h/SKILL.md":"---\nname: h\n---\n","h/examples/app.md":"[m](../h.skill.md) [gone](./gone.md)\n","h/data.txt":"[m](./h.skill.md)\n"}
    """
 
+ @category/negative
  Scenario: A file changed before flattening is a bug: the flat transformer runs first
   Given a repository "repo" holding
    """
@@ -120,6 +127,7 @@ Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites lin
   And I flatten the target catalog
   Then the flattening panics with "must run first"
 
+ @category/happy
  Scenario: A shared file no skill holds is copied into the first skill that links to it, and every link leads there
   Given a repository "repo" holding
    """

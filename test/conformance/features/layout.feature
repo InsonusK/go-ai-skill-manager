@@ -1,7 +1,9 @@
+@type/api/cli
 Feature: Every skill is written into the target as {name}/SKILL.md with its files
 
  # Configs use settings.target: both implementations read it.
 
+ @category/happy
  Scenario: Every source form of a skill becomes a folder named after it
   Given the project
    """
@@ -20,6 +22,7 @@ Feature: Every skill is written into the target as {name}/SKILL.md with its file
    """
   And the project file "out/h/SKILL.md" contains "H\n"
 
+ @category/happy
  Scenario: An executable file stays executable
   Given the project
    """
@@ -31,6 +34,7 @@ Feature: Every skill is written into the target as {name}/SKILL.md with its file
   Then aism succeeds
   And the project file "out/a/run.sh" is executable in the target too
 
+ @category/happy
  Scenario: A Claude target gets whenToUse as when_to_use, another target keeps it
   Given the project
    """
@@ -44,6 +48,7 @@ Feature: Every skill is written into the target as {name}/SKILL.md with its file
   And the project file "out/a/SKILL.md" contains "whenToUse: on review"
   And the project file "out/a/SKILL.md" contains "Body"
 
+ @category/boundary
  Scenario: Folders named examples are copied with the skill, even with a skill marker or a broken link inside
   Given the project
    """

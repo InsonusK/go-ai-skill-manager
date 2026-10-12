@@ -1,9 +1,11 @@
+@type/infrastructure/file
 Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as files the user reads, edits and commits
 
  # Drafts lie in .ai-skills/feedback of the target folder used as the
  # project; the loaded draft is {ID, Status, Kind, Skill, Source, Commit,
  # SkillPath, Title, Body, IssueURL, CreatedAt, SentAt}.
 
+ @category/happy
  Scenario: The marker of a managed skill tells where the skill comes from
   Given an empty target
   And the marker of "guide" is
@@ -16,6 +18,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
    {"source":{"type":"github","path":"https://github.com/o/r","tree":"main"},"commit":"c0ffee","skill_path":"a/guide","transformers":["flat"],"version":"go-3"}
    """
 
+ @category/negative
  Scenario Outline: A skill is not managed when <case>
   Given an empty target
   And target fixture file "other/.ai-skills-managed" contains "{}"
@@ -34,11 +37,13 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
    | the entry is a symlink          | linked    |
    | the marker isn't a regular file | markerdir |
 
+ @category/negative
  Scenario: A skill is not managed when the target folder doesn't exist
   Given an empty target
   When I read the marker of "guide" in a target folder that doesn't exist
   Then the skill is not managed
 
+ @category/negative
  Scenario: A marker of the older format asks to run sync
   Given an empty target
   And the marker of "guide" is
@@ -48,11 +53,13 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
   When I read the marker of "guide"
   Then reading the marker fails with "written by an older version? run sync"
 
+ @category/negative
  Scenario: A skill name that isn't one folder name is refused
   Given an empty target
   When I read the marker of "../guide"
   Then reading the marker fails with "unsafe skill name"
 
+ @category/happy
  Scenario: A draft is written as frontmatter, the title heading and the body, and read back the same
   Given an empty target
   When I create the draft "2026-09-27-guide-broken-anchor" of a "bug" on "guide" titled "Broken anchor" with body "The anchor #x is missing.\n\nSee SKILL.md."
@@ -86,6 +93,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
     "Title":"Broken anchor","Body":"The anchor #x is missing.\n\nSee SKILL.md.","IssueURL":"","CreatedAt":"2026-09-27T10:00:00Z","SentAt":""}
    """
 
+ @category/boundary
  Scenario: A taken id gets the first free suffix
   Given an empty target
   When I create the draft "2026-09-27-guide" of a "bug" on "guide" titled "A" with body "a"
@@ -94,6 +102,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
   When I create the draft "2026-09-27-guide" of a "bug" on "guide" titled "C" with body "c"
   Then the created id is "2026-09-27-guide-3"
 
+ @category/happy
  Scenario: The drafts are listed by id, of any status; other files aren't drafts
   Given an empty target
   When I list the drafts
@@ -117,6 +126,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
   When I list the drafts
   Then the drafts listed are "a,b"
 
+ @category/happy
  Scenario: A sent draft records the issue and when it was sent
   Given an empty target
   And I create the draft "d" of a "improvement" on "guide" titled "T" with body "B"
@@ -144,6 +154,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
    B
    """
 
+ @category/happy
  Scenario: A draft edited by hand is read as the user left it, CRLF line ends too
   Given an empty target
   And the draft file "d.md" contains
@@ -169,6 +180,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
     "Title":"Edited title","Body":"Edited body.","IssueURL":"","CreatedAt":"2026-09-27T10:00:00Z","SentAt":""}
    """
 
+ @category/negative
  Scenario Outline: A draft file that <case> is refused
   Given an empty target
   And the draft file "d.md" contains
@@ -184,6 +196,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
    | never closes frontmatter | ---                               | frontmatter isn't closed                |
    | has no title heading     | ---\nstatus: draft\n---\n\nbody   | the text must start with the title      |
 
+ @category/negative
  Scenario Outline: An id that isn't a plain draft name is refused (<id>)
   Given an empty target
   When I load the draft "<id>"
@@ -197,6 +210,7 @@ Feature: Store reads a skill's marker; FeedbackDrafts keeps feedback drafts as f
    | d.md         |
    | Upper        |
 
+ @category/negative
  Scenario: Only an existing draft is saved
   Given an empty target
   When I save a draft "missing"

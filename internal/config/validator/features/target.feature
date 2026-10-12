@@ -1,3 +1,4 @@
+@type/domain
 Feature: No two targets write into the same folder
 
  Scenario Outline: Two targets
@@ -11,14 +12,20 @@ Feature: No two targets write into the same folder
    """
    <issues>
    """
-  Examples:
+  @category/happy
+  Examples: apart
    | one      | two          | issues |
    | out      | out2         | [] |
+
+  @category/negative
+  Examples: overlapping
+   | one      | two          | issues |
    | out      | out          | [["target-overlap","","targets[1].path"]] |
    | out      | out/nested   | [["target-overlap","","targets[1].path"]] |
    | out/in   | out          | [["target-overlap","","targets[1].path"]] |
    | /        | /project/out | [["target-overlap","","targets[1].path"]] |
 
+ @category/negative
  Scenario: The message names both targets
   When I validate configuration
    """

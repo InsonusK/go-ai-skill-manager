@@ -13,7 +13,7 @@ import (
 func Run(t *testing.T, initialize func(*godog.ScenarioContext)) {
 	t.Helper()
 	suite := godog.TestSuite{ScenarioInitializer: initialize, Options: &godog.Options{
-		Format: "pretty", Paths: []string{"../features"}, Tags: "~@todo", Strict: true, TestingT: t,
+		Format: "pretty", Paths: []string{"../features"}, Tags: "~@status/todo && ~@status/broken", Strict: true, TestingT: t,
 		ShowStepDefinitions: os.Getenv("GODOG_STEPS") == "1",
 	}}
 	if suite.Run() != 0 {

@@ -1,3 +1,4 @@
+@type/api/cli
 Feature: Command line: feedback -- the agent drafts, the user confirms and sends
 
  # The skill guide was synced into "out" from a GitHub source; notes from a
@@ -13,6 +14,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
     "out/notes/.ai-skills-managed":"{\"source\":{\"type\":\"local\",\"path\":\"/p/skills\"},\"skill_path\":\"notes\",\"transformers\":[\"flat\"],\"version\":\"go-3\"}"}
    """
 
+ @category/happy
  Scenario: A draft is written next to the config and nothing is sent
   When I run argv
    """
@@ -25,6 +27,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And project file ".ai-skills/feedback/2026-09-27-guide-broken-anchor.md" contains "status: draft"
   And the opened issues are ""
 
+ @category/happy
  Scenario: The body can come from stdin
   Given stdin holds "Line one.\nLine two.\n"
   When I run argv
@@ -34,6 +37,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   Then exit code is "0"
   And project file ".ai-skills/feedback/2026-09-27-guide-examples.md" contains "# Examples\n\nLine one.\nLine two.\n"
 
+ @category/negative
  Scenario: A skill from a local source can't get feedback
   When I run argv
    """
@@ -43,6 +47,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And console contains "comes from the local source /p/skills: edit it there by hand"
   And project path ".ai-skills/feedback" exists "false"
 
+ @category/negative
  Scenario: Without the user's terminal nothing is sent and the user is asked to run send
   Given I run argv
    """
@@ -55,6 +60,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And the opened issues are ""
   And project file ".ai-skills/feedback/2026-09-27-guide-t.md" contains "status: draft"
 
+ @category/happy
  Scenario: The user confirms in the terminal: the issue is opened and the draft records it
   Given I run argv
    """
@@ -73,6 +79,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And console contains "feedback 2026-09-27-guide-t is already sent"
   And the opened issues are "T"
 
+ @category/negative
  Scenario Outline: Anything but yes sends nothing (<answer>)
   Given I run argv
    """
@@ -90,6 +97,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
    |        |
    | yep    |
 
+ @category/happy
  Scenario: send all asks about every draft not yet sent or declined, each on its own answer
   Given I run argv
    """
@@ -124,6 +132,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And stdout contains "No feedback drafts to send.\n"
   And the opened issues are "A,B"
 
+ @category/negative
  Scenario: send all without the user's terminal sends nothing
   Given I run argv
    """
@@ -135,6 +144,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And console contains "needs a terminal: ask the user to run it:\n  ai-skill-manager feedback send all\n"
   And the opened issues are ""
 
+ @category/error
  Scenario: send all sends the readable drafts and fails on a draft file it can't read
   Given CLI project
    """
@@ -153,6 +163,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And console contains "feedback broken: no frontmatter"
   And the opened issues are "T"
 
+ @category/negative
  Scenario: show tells the status; a declined draft stays and can't be sent
   Given I run argv
    """
@@ -169,6 +180,7 @@ Feature: Command line: feedback -- the agent drafts, the user confirms and sends
   And console contains "feedback 2026-09-27-guide-t is already declined"
   And the opened issues are ""
 
+ @category/happy
  Scenario: With another config the drafts lie next to it and the send hint names it
   Given CLI project
    """

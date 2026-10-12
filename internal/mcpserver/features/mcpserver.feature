@@ -1,3 +1,4 @@
+@type/api/mcp
 Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in the client's dialog
 
  # Checked on the current protocol (multi round-trip requests) and on the
@@ -8,6 +9,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
   Given the skill "guide" comes from "github" "https://github.com/o/r"
   And the skill "notes" comes from "local" "/p/skills"
 
+ @category/happy
  Scenario Outline: The draft sends nothing and tells the agent what's next (<protocol>)
   Given the client speaks protocol "<protocol>"
   When the agent drafts a "bug" on "guide" titled "Broken anchor" with body "The anchor is missing."
@@ -25,6 +27,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
    | 2026-07-28 |
    | 2025-11-25 |
 
+ @category/happy
  Scenario Outline: The user sees the whole issue and ticks send: it is opened (<protocol>)
   Given the client speaks protocol "<protocol>"
   And the user answers the dialog "accept" ticking send
@@ -57,6 +60,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
    | 2026-07-28 |
    | 2025-11-25 |
 
+ @category/negative
  Scenario Outline: Anything but accept with send ticked sends nothing (<answer>)
   Given the client speaks protocol "2026-07-28"
   And the user answers the dialog <answer>
@@ -75,6 +79,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
    | "decline"                             |
    | "cancel"                              |
 
+ @category/boundary
  Scenario Outline: A client without dialogs sends nothing and points the user to the terminal (<protocol>)
   Given the client speaks protocol "<protocol>"
   And the client can't show dialogs
@@ -96,6 +101,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
    | 2026-07-28 |
    | 2025-11-25 |
 
+ @category/boundary
  Scenario: A client showing only links (URL elicitation) gets no form and nothing is sent
   Given the client speaks protocol "2026-07-28"
   And the client shows only links, no forms
@@ -108,6 +114,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
   And the user saw no dialog
   And the opened issues are ""
 
+ @category/negative
  Scenario: A draft edited while the dialog is open is not sent
   Given the client speaks protocol "2026-07-28"
   And the user answers the dialog "accept" ticking send
@@ -118,6 +125,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
   And the opened issues are ""
   And the draft is "draft"
 
+ @category/negative
  Scenario: A sent draft is not asked about again
   Given the client speaks protocol "2026-07-28"
   And the user answers the dialog "accept" ticking send
@@ -127,6 +135,7 @@ Feature: MCP tools: the agent drafts a skill feedback, the user confirms it in t
   Then the tool fails with "feedback 2026-09-27-guide-t is already sent"
   And the opened issues are "T"
 
+ @category/negative
  Scenario: A skill from a local source gets no draft
   Given the client speaks protocol "2026-07-28"
   When the agent drafts a "bug" on "notes" titled "T" with body "B"

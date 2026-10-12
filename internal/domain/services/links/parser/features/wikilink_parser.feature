@@ -1,6 +1,8 @@
+@type/domain
 Feature: WikilinkParser finds and parses wikilinks
 
  # Gherkin table cells unescape "\|" to "|" and "\\" to "\".
+ @category/happy
  Scenario Outline: Parse a raw wikilink
   When I parse the wikilink <raw>
   Then the parsed link has text "<text>" path "<path>" fragment "<fragment>" image <image>
@@ -15,6 +17,7 @@ Feature: WikilinkParser finds and parses wikilinks
    | [[a\|b\|c]]                   | c           | a\|b                |          | false |
    | [[https://example.com\|site]] | site        | https://example.com |          | false |
 
+ @category/negative
  Scenario Outline: Parse rejects text that is not exactly one wikilink
   When I parse the wikilink <raw>
   Then parsing fails with "invalid-link"
@@ -25,6 +28,7 @@ Feature: WikilinkParser finds and parses wikilinks
    | see [[notes]]     |
    | [[a]] [[b]]       |
 
+ @category/happy
  Scenario: Find returns wikilink spans
   When I find wikilinks in
    """
@@ -35,6 +39,7 @@ Feature: WikilinkParser finds and parses wikilinks
    [[0,9],[15,38]]
    """
 
+ @category/happy
  Scenario: Find ignores markdown links
   When I find wikilinks in
    """

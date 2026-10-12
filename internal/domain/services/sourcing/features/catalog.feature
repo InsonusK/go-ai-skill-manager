@@ -1,4 +1,6 @@
+@type/service
 Feature: SkillCatalog answers from its cache and fetches on a miss
+ @category/happy
  Scenario: A repeated GetOrFetchByPath call for the same path reuses the already-resolved skill
   Given a source tree
    """
@@ -10,6 +12,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   Then no additional directories were read
   And found names are "one" and catalog error contains ""
 
+ @category/happy
  Scenario: Manager acquisition is lazy and cached across GetOrFetchByPath calls
   Given a source tree
    """
@@ -19,6 +22,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   And I get or add skills at "b"
   Then the source manager acquired "1" times
 
+ @category/happy
  Scenario Outline: GetByPathUp finds the loaded skill whose folder holds a path, and nothing past it
   Given a source tree
    """
@@ -36,6 +40,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
    | one.skill.md     | flat  |            |
    | one.skill.md.bak |       | no skill holds one.skill.md.bak |
 
+ @category/happy
  Scenario Outline: GetByPath answers by key -- a requested path or a skill's own folder -- without reading anything
   Given a source tree
    """
@@ -52,6 +57,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
    | a    | one     |
    | b/c  | two     |
 
+ @category/negative
  Scenario: GetByPath fails with not-cached for a path never requested, even with loaded skills below it
   Given a source tree
    """
@@ -61,6 +67,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   And I get cached skills at "b"
   Then the catalog reports the skill is not cached
 
+ @category/happy
  Scenario: GetOrFetchByPath fetches a wider path even when a skill below it is already loaded
   Given a source tree
    """
@@ -70,6 +77,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   And I get or add skills at "."
   Then found names are "one,two" and catalog error contains ""
 
+ @category/negative
  Scenario: A fetch that found an invalid skill is not remembered as complete, so it reports the issue again
   Given a source tree
    """
@@ -82,6 +90,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I get cached skills at "a"
   Then found names are "one" and catalog error contains ""
 
+ @category/negative
  Scenario: GetByPath fails with not-cached when the path was never resolved
   Given a source tree
    """
@@ -91,6 +100,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   And I get cached skills at "b"
   Then the catalog reports the skill is not cached
 
+ @category/negative
  Scenario: GetByPath fails with not-cached before the source is acquired
   Given a source tree
    """
@@ -100,6 +110,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   Then the catalog reports the skill is not cached
   And the source manager acquired "0" times
 
+ @category/happy
  Scenario Outline: TryGetOrFetchByPath fetches only when add relations is on
   Given a source tree
    """
@@ -113,6 +124,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
    | true      | 1        |
    | false     | 0        |
 
+ @category/happy
  Scenario: TryGetOrFetchByPath with add relations on returns the fetched skill
   Given a source tree
    """
@@ -122,6 +134,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I try to get or fetch skills at "a"
   Then found names are "one" and catalog error contains ""
 
+ @category/negative
  Scenario: TryGetOrFetchByPath with add relations off fails with not-cached
   Given a source tree
    """
@@ -131,6 +144,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I try to get or fetch skills at "a"
   Then the catalog reports the skill is not cached
 
+ @category/happy
  Scenario: TryGetOrFetchByPathUp returns a cached skill without reading anything
   Given a source tree
    """
@@ -143,6 +157,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   Then no additional directories were read
   And found names are "one" and catalog error contains ""
 
+ @category/negative
  Scenario: TryGetOrFetchByPathUp with add relations off fails with not-cached
   Given a source tree
    """
@@ -152,6 +167,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I try to get or fetch the skill holding "a/docs/x.md"
   Then the catalog reports the skill is not cached
 
+ @category/happy
  Scenario: TryGetOrFetchByPathUp with add relations on fetches the skill whose folder holds the path
   Given a source tree
    """
@@ -163,6 +179,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I get the cached skill holding "a/docs/x.md"
   Then found names are "one" and catalog error contains ""
 
+ @category/negative
  Scenario: TryGetOrFetchByPathUp with add relations on refuses a path missing from the repository
   Given a source tree
    """
@@ -172,6 +189,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I try to get or fetch the skill holding "a/missing.md"
   Then found names are "" and catalog error contains "does not exist"
 
+ @category/happy
  Scenario: TryGetOrFetchByPathUp fetches only the skill holding the path, not its neighbours
   Given a source tree
    """
@@ -184,6 +202,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I get cached skills at "b"
   Then the catalog reports the skill is not cached
 
+ @category/happy
  Scenario: GetByPathUp returns the cached skill whose folder holds a path, without reading anything
   Given a source tree
    """
@@ -195,6 +214,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   Then no additional directories were read
   And found names are "one" and catalog error contains ""
 
+ @category/negative
  Scenario: GetByPathUp fails with not-cached even when add relations is on
   Given a source tree
    """
@@ -206,6 +226,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   Then the catalog reports the skill is not cached
   And the source manager acquired "1" times
 
+ @category/happy
  Scenario Outline: GetByPathUp finds a loaded skill from any path inside its folder or its flat marker file
   Given a source tree
    """
@@ -221,6 +242,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
    | a/SKILL.md       | one   |
    | two.skill.md     | two   |
 
+ @category/happy
  Scenario: GetByPathUp does not take a requested path above a skill for that skill's folder
   Given a source tree
    """
@@ -231,6 +253,7 @@ Feature: SkillCatalog answers from its cache and fetches on a miss
   When I get the cached skill holding "x/z.md"
   Then the catalog reports the skill is not cached
 
+ @category/happy
  Scenario: A wider fetch searches into a requested path above skills instead of taking it for one skill
   Given a source tree
    """

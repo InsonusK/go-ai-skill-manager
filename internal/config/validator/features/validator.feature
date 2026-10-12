@@ -1,5 +1,7 @@
+@type/domain
 Feature: A resolved configuration is checked by every config validator at once
 
+ @category/happy
  Scenario: A valid configuration has no issues
   When I validate configuration
    """
@@ -18,6 +20,7 @@ Feature: A resolved configuration is checked by every config validator at once
    """
   Then there are no config issues
 
+ @category/negative
  Scenario: Problems of every validator are reported together, in validator order
   When I validate configuration
    """

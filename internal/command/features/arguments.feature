@@ -1,7 +1,9 @@
+@type/api/cli
 Feature: CLI argument contract
  Global options go before or after the command; a command takes only its
  own options (and, for feedback and mcp, those of the action).
 
+ @category/happy
  Scenario: All sync options are parsed without executing integrations
   When I parse argument list
    """
@@ -17,6 +19,7 @@ Feature: CLI argument contract
     "Override":{"Target":"out","DryRun":true,"RemoveOrphans":true,"AddRelations":true},"Force":true}
    """
 
+ @category/happy
  Scenario: Global options go after the command too
   When I parse argument list
    """
@@ -27,6 +30,7 @@ Feature: CLI argument contract
    {"Help":false,"Version":false,"Debug":true,"Profile":false,"Color":"never","ProfileOutput":"ai-skill-manager.prof","MemProfileOutput":"ai-skill-manager.mem.prof"}
    """
 
+ @category/happy
  Scenario: --keep-orphans turns removal off; --add-relations=false keeps relations off
   When I parse argument list
    """
@@ -38,6 +42,7 @@ Feature: CLI argument contract
     "Override":{"Target":"","DryRun":false,"RemoveOrphans":false,"AddRelations":false},"Force":false}
    """
 
+ @category/happy
  Scenario: validate takes the source options and --add-relations
   When I parse argument list
    """
@@ -49,6 +54,7 @@ Feature: CLI argument contract
     "Override":{"Target":"","DryRun":false,"RemoveOrphans":null,"AddRelations":true}}
    """
 
+ @category/negative
  Scenario Outline: Malformed arguments fail parsing
   When I parse argument list
    """
@@ -70,6 +76,7 @@ Feature: CLI argument contract
    | ["sync","--bad"] | unknown flag "--bad" for sync: see aism sync --help |
    | ["-c","x.yaml","sync"] | unknown flag "-c": a command's flags go after the command |
 
+ @category/negative
  Scenario Outline: A command takes only its own flags
   When I parse argument list
    """
@@ -89,6 +96,7 @@ Feature: CLI argument contract
    | ["mcp","uninstall","--replace"] | unknown flag "--replace" for mcp uninstall |
    | ["mcp","install","-t","local","-p","x"] | unknown flag "-t" for mcp install |
 
+ @category/happy
  Scenario: mcp takes the config
   When I parse argument list
    """
@@ -99,6 +107,7 @@ Feature: CLI argument contract
    {"Action":"","ServerName":"ai-skill-manager","Replace":false,"Source":{"Config":"custom.yaml","Type":"","Path":"","Subpaths":null}}
    """
 
+ @category/happy
  Scenario: mcp install takes the server's name and --replace
   When I parse argument list
    """
@@ -109,6 +118,7 @@ Feature: CLI argument contract
    {"Action":"install","ServerName":"skills-feedback","Replace":true,"Source":{"Config":"","Type":"","Path":"","Subpaths":null}}
    """
 
+ @category/happy
  Scenario: feedback draft takes the skill, the kind, the title and the body
   When I parse argument list
    """
@@ -119,6 +129,7 @@ Feature: CLI argument contract
    {"Action":"draft","ID":"","Source":{"Config":"custom.yaml","Type":"","Path":"","Subpaths":null},"Skill":"guide","Kind":"bug","Title":"Broken anchor","Body":"","BodyFile":"-"}
    """
 
+ @category/happy
  Scenario Outline: feedback <action> takes the draft id
   When I parse argument list
    """
@@ -134,6 +145,7 @@ Feature: CLI argument contract
    | send    |
    | decline |
 
+ @category/negative
  Scenario Outline: Malformed feedback arguments fail parsing
   When I parse argument list
    """
@@ -151,6 +163,7 @@ Feature: CLI argument contract
    | ["feedback","draft","--skill","g","--kind","bug","--title","t"] | needs either --body or --body-file |
    | ["feedback","draft","--skill","g","--kind","bug","--title","t","--body","b","--body-file","f"] | needs either --body or --body-file |
 
+ @category/negative
  Scenario Outline: Malformed mcp arguments fail parsing
   When I parse argument list
    """
@@ -162,6 +175,7 @@ Feature: CLI argument contract
    | ["mcp","add"] | unknown mcp action "add": use install, uninstall, or none to serve |
    | ["mcp","install","extra"] | unexpected argument "extra" |
 
+ @category/boundary
  Scenario Outline: With --help a command's missing arguments don't matter
   When I parse argument list
    """

@@ -1,5 +1,7 @@
+@type/api/cli
 Feature: Command line: sync and validate
 
+ @category/happy
  Scenario: Sync writes every skill into every target, laid out and transformed for it
   Given CLI project
    """
@@ -17,6 +19,7 @@ Feature: Command line: sync and validate
   And project file ".claude/skills/guide/SKILL.md" contains "[Review](../review/SKILL.md)"
   And project file ".claude/skills/review/.ai-skills-managed" contains "\"transformers\": [\n    \"flat\",\n    \"claude-when-to-use\"\n  ]"
 
+ @category/happy
  Scenario: A second sync updates the managed folders and removes a skill no longer synchronized
   Given CLI project
    """
@@ -31,6 +34,7 @@ Feature: Command line: sync and validate
   And project path "out/b" exists "false"
   And project path "out/a/SKILL.md" exists "true"
 
+ @category/happy
  Scenario: A dry run prints the plans and writes nothing
   Given CLI project
    """
@@ -41,6 +45,7 @@ Feature: Command line: sync and validate
   And stdout contains "  create a\nDry run: 1 skill(s), 1 target(s); nothing written"
   And project path "out" exists "false"
 
+ @category/happy
  Scenario: Direct mode needs no config file
   Given CLI project
    """
@@ -50,6 +55,7 @@ Feature: Command line: sync and validate
   Then exit code is "0"
   And project file "output/a/SKILL.md" contains "Content"
 
+ @category/happy
  Scenario: validate checks the skills and writes nothing
   Given CLI project
    """
@@ -60,6 +66,7 @@ Feature: Command line: sync and validate
   And stdout contains "Checked 2 skill(s): no problems"
   And project path "out" exists "false"
 
+ @category/negative
  Scenario Outline: Skill problems are printed as a tree and nothing is written
   Given CLI project
    """
@@ -77,6 +84,7 @@ Feature: Command line: sync and validate
    | validate |
    | sync     |
 
+ @category/negative
  Scenario Outline: Configuration problems stop every command before the skills are loaded
   Given CLI project
    """
@@ -91,6 +99,7 @@ Feature: Command line: sync and validate
    | validate | tags: [go]         | E102 unsupported-tags |
    | sync     | subpath: ../escape | E103 unsafe-subpath   |
 
+ @category/happy
  Scenario Outline: Color mode controls logs and problem reports
   Given CLI project
    """
@@ -105,6 +114,7 @@ Feature: Command line: sync and validate
    | always | true  |
    | never  | false |
 
+ @category/negative
  Scenario: A missing subpath is a problem
   Given CLI project
    """
@@ -114,6 +124,7 @@ Feature: Command line: sync and validate
   Then exit code is "1"
   And console contains "missing-subpath"
 
+ @category/negative
  Scenario: A target folder this tool didn't write is never overwritten
   Given CLI project
    """
@@ -124,6 +135,7 @@ Feature: Command line: sync and validate
   And console contains "\n└── skill a\n    └── E401 unmanaged-target\n"
   And project file "out/a/SKILL.md" contains "mine"
 
+ @category/happy
  Scenario Outline: Warnings are printed in the tree with their details and don't stop the command
   Given CLI project
    """
@@ -140,6 +152,7 @@ Feature: Command line: sync and validate
    | validate | Checked 1 skill(s): no errors, 1 warning(s) | false   |
    | sync     | Synced 1 skill(s) to 1 target(s)          | true    |
 
+ @category/negative
  Scenario: Errors and warnings are printed as one tree and nothing is written
   Given CLI project
    """
@@ -152,6 +165,7 @@ Feature: Command line: sync and validate
   And console contains "Found 1 error(s), 1 warning(s)"
   And project path "out" exists "false"
 
+ @category/happy
  Scenario: Deprecated options still work, with a warning
   Given CLI project
    """
@@ -174,11 +188,16 @@ Feature: Command line: sync and validate
   When I run arguments "<args>"
   Then exit code is "<code>"
   And console contains "<message>"
-  Examples:
+  @category/happy
+  Examples: succeeds
    | args                 | code | message             |
    | --help               | 0    | Usage:              |
    | --version            | 0    | test-version        |
    | sync --version       | 0    | test-version        |
+
+  @category/negative
+  Examples: fails
+   | args                 | code | message             |
    | sync                 | 1    | ai-skills.yaml      |
    | validate             | 1    | ai-skills.yaml      |
    | sync --bad           | 2    | unknown flag        |
@@ -187,6 +206,7 @@ Feature: Command line: sync and validate
    | sync --type local    | 1    | --path              |
    | sync --config        | 2    | requires a value    |
 
+ @category/happy
  Scenario: aism --help lists every command and the global options
   Given CLI project
    """
@@ -204,6 +224,7 @@ Feature: Command line: sync and validate
   And stdout contains "Run \"aism <command> --help\""
   And stdout doesn't contain "--dry-run"
 
+ @category/happy
  Scenario Outline: A command's help lists its own options and the global ones
   Given CLI project
    """
@@ -228,6 +249,7 @@ Feature: Command line: sync and validate
    | mcp install --help       | mcp install [-c FILE]              | --replace                   | --dry-run      |
    | mcp uninstall --help     | mcp uninstall [-c FILE]            | --name NAME                 | --replace      |
 
+ @category/happy
  Scenario: aism mcp --help lists the tools the server gives the agent
   Given CLI project
    """
@@ -238,6 +260,7 @@ Feature: Command line: sync and validate
   And stdout contains "Tools the server gives the agent:\n  feedback_draft   Write a feedback about a skill"
   And stdout contains "\n  feedback_submit  Ask the user to confirm a feedback draft"
 
+ @category/happy
  Scenario: An mcp action's help doesn't list the server's tools
   Given CLI project
    """
@@ -247,6 +270,7 @@ Feature: Command line: sync and validate
   Then exit code is "0"
   And stdout doesn't contain "feedback_draft"
 
+ @category/negative
  Scenario: Whitespace GitHub path is a configuration error
   Given CLI project
    """

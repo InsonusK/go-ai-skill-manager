@@ -1,4 +1,6 @@
+@type/infrastructure/client/git
 Feature: Git adapter process contract
+ @category/happy
  Scenario: Git clone arguments preserve branch and URL boundaries, then the cloned commit is read
   When I prepare a clone for branch "feature/demo"
   Then git calls are
@@ -7,6 +9,7 @@ Feature: Git adapter process contract
     ["-C","/tmp/dest","rev-parse","HEAD"]]
    """
   And the cloned commit is "c0ffee"
+ @category/boundary
  Scenario: Default branch is master
   When I prepare a clone for branch ""
   Then git calls are
@@ -14,6 +17,7 @@ Feature: Git adapter process contract
    [["clone","--depth","1","--single-branch","--branch","master","--","https://github.com/owner/repo.git","/tmp/dest"],
     ["-C","/tmp/dest","rev-parse","HEAD"]]
    """
+ @category/happy
  Scenario Outline: A full commit hash is fetched by itself, not cloned as a branch
   When I prepare a clone for branch "<tree>"
   Then git calls are
@@ -29,6 +33,7 @@ Feature: Git adapter process contract
    | 874B5B81D18AD24AF34B2A294830F049DE5C3F30                         | 874b5b81d18ad24af34b2a294830f049de5c3f30                         |
    | 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef | 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef |
 
+ @category/happy
  Scenario Outline: Anything else is cloned as a branch or a tag
   When I prepare a clone for branch "<tree>"
   Then git calls are
@@ -43,6 +48,7 @@ Feature: Git adapter process contract
    | 874b5b81d18ad24af34b2a294830f049de5c3f3   |
    | 874b5b81d18ad24af34b2a294830f049de5c3f3g  |
 
+ @category/happy
  Scenario Outline: Real git takes a branch, a tag or a commit
   Given a git repository with commits
    | message | content | tag |
@@ -57,13 +63,16 @@ Feature: Git adapter process contract
    | v1     | one     | first  |
    | @first | one     | first  |
 
+ @category/happy
  Scenario: Git process executes a real local command and returns its output
   When I run Git with "version"
   Then git process error contains ""
   And git output starts with "git version"
+ @category/error
  Scenario: Git process propagates errors
   When I run Git with "not-a-command"
   Then git process error contains "git:"
+ @category/error
  Scenario: Git process respects cancellation
   When I run Git in a cancelled context
   Then git process error contains "context canceled"

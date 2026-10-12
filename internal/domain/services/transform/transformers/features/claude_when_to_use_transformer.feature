@@ -1,8 +1,10 @@
+@type/domain
 Feature: ClaudeWhenToUseTransformer renames whenToUse to Claude Code's when_to_use
 
  # The target is listed as "{skill dir}/{file path}" -> content; the
  # catalog isn't flattened here, so skill dirs are the source ones.
 
+ @category/happy
  Scenario Outline: whenToUse becomes when_to_use, a list joined with ", "
   Given a repository "repo" holding
    """
@@ -24,6 +26,7 @@ Feature: ClaudeWhenToUseTransformer renames whenToUse to Claude Code's when_to_u
    | whenToUse: on review            | on review          |
    | whenToUse: [review, refactor]   | review, refactor   |
 
+ @category/boundary
  Scenario: A skill without whenToUse is left byte for byte
   Given a repository "repo" holding
    """
@@ -37,6 +40,7 @@ Feature: ClaudeWhenToUseTransformer renames whenToUse to Claude Code's when_to_u
    {"a/SKILL.md":"---\nname: a\n# comment\ndescription: d\n---\n"}
    """
 
+ @category/happy
  Scenario: A skill with both keeps when_to_use and whenToUse, with a warning
   Given a repository "repo" holding
    """

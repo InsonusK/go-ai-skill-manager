@@ -1,9 +1,11 @@
+@type/domain
 Feature: Select skills using tag expressions
  Scenario Outline: Operator and hierarchical matching
   Given tags "<tags>"
   When I evaluate "<expression>"
   Then the match is "<match>" and error is "<error>"
-  Examples:
+  @category/happy
+  Examples: well-formed
    | tags | expression | match | error |
    | go,cli | go & cli | true | |
    | go | !cli & go | true | |
@@ -25,6 +27,10 @@ Feature: Select skills using tag expressions
    | x | /** | true | |
    | | * | false | |
    | x | ** | true | |
+
+  @category/negative
+  Examples: malformed
+   | tags | expression | match | error |
    | go | (go | false | invalid tag expression |
    | go | go cli | false | invalid tag expression |
    | go | go & | false | invalid tag expression |

@@ -1,3 +1,4 @@
+@type/api/cli
 Feature: Command line: mcp install and uninstall set up the MCP server in Claude Code's .mcp.json
 
  Background:
@@ -6,6 +7,7 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
    {"ai-skills.yaml":"sources:\n  - path: skills\ntarget: out\n"}
    """
 
+ @category/happy
  Scenario: install writes the server next to the config, run by the name found in PATH
   Given the tool runs as "aism" found in PATH
   When I run arguments "mcp install"
@@ -17,6 +19,7 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
   And stdout contains "Added MCP server ai-skill-manager to "
   And stdout contains "Commit .mcp.json. Claude Code asks to approve the server ai-skill-manager the first time you run claude in this project."
 
+ @category/happy
  Scenario: The other servers and keys of .mcp.json stay
   Given CLI project
    """
@@ -30,6 +33,7 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
    {"mcpServers":{"other":{"command":"npx","args":["-y","x"],"env":{"K":"${K:-}"}},"ai-skill-manager":{"command":"aism","args":["mcp"]}},"extra":true}
    """
 
+ @category/happy
  Scenario: A config other than ai-skills.yaml is passed to the server; the file lies next to it
   Given CLI project
    """
@@ -43,6 +47,7 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
    {"mcpServers":{"skills-feedback":{"command":"ai-skill-manager","args":["mcp","-c","cfg.yaml"]}}}
    """
 
+ @category/boundary
  Scenario: A tool not in PATH is written by its absolute path, with a warning
   Given the tool isn't in PATH and lies at "/home/me/bin/aism"
   When I run arguments "mcp install"
@@ -53,12 +58,14 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
    """
   And stdout contains "Warning: /home/me/bin/aism is an absolute path of this machine"
 
+ @category/boundary
  Scenario: install again changes nothing
   Given I run arguments "mcp install"
   When I run arguments "mcp install"
   Then exit code is "0"
   And stdout contains "MCP server ai-skill-manager is already in "
 
+ @category/negative
  Scenario: Another server under the name is kept unless --replace
   Given CLI project
    """
@@ -79,6 +86,7 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
    {"mcpServers":{"ai-skill-manager":{"command":"aism","args":["mcp"]}}}
    """
 
+ @category/negative
  Scenario: A .mcp.json that isn't valid is left for the user to fix
   Given CLI project
    """
@@ -89,6 +97,7 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
   And console contains "isn't a JSON object"
   And project file ".mcp.json" contains "{\"mcpServers\": [}"
 
+ @category/happy
  Scenario: uninstall removes only this server
   Given CLI project
    """
@@ -106,6 +115,7 @@ Feature: Command line: mcp install and uninstall set up the MCP server in Claude
   Then exit code is "0"
   And stdout contains "No MCP server ai-skill-manager in "
 
+ @category/boundary
  Scenario: uninstall without .mcp.json has nothing to do
   When I run arguments "mcp uninstall --name skills-feedback"
   Then exit code is "0"

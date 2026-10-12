@@ -1,4 +1,6 @@
+@type/mapping
 Feature: Effective synchronization configuration
+ @category/happy
  Scenario: Defaults for a local source
   Given configuration
    """
@@ -11,6 +13,7 @@ Feature: Effective synchronization configuration
    {"sources":[{"type":"local","path":"/project/skills","subpaths":[],"tags":[],"exclude":[]}],"targets":[{"name":"default","path":"/project/.agents/skills","adapters":[]}],"tempDir":"","dry":false,"orphans":true,"relations":false,"exclude":["examples","templates"]}
    """
   And the config log has INFO "settings.validation.exclude_from_checks"
+ @category/happy
  Scenario: Named targets and global adapters
   Given configuration
    """
@@ -34,6 +37,7 @@ Feature: Effective synchronization configuration
    """
    {"sources":[],"targets":[{"name":"default","path":"/project/.agents/skills","adapters":[]},{"name":"claude","path":"/project/.claude/skills","adapters":["claude-property-adapter"]}],"tempDir":"","dry":true,"orphans":false,"relations":true,"exclude":[]}
    """
+ @category/happy
  Scenario Outline: Temporary directory resolves from the configuration directory
   Given configuration
    """
@@ -50,6 +54,7 @@ Feature: Effective synchronization configuration
    | temp_dir | resolved |
    | .tmp | /project/.tmp |
    | /var/tmp/aism | /var/tmp/aism |
+ @category/negative
  Scenario: Unknown adapters fail
   Given configuration
    """
@@ -60,6 +65,7 @@ Feature: Effective synchronization configuration
    """
   When I resolve configuration
   Then the config error contains "unknown adapter"
+ @category/negative
  Scenario: Invalid settings fail
   Given configuration
    """
@@ -68,6 +74,7 @@ Feature: Effective synchronization configuration
    """
   When I resolve configuration
   Then the config error contains "dry_run must be a boolean"
+ @category/happy
  Scenario: JSON configuration is accepted
   Given configuration
    """
@@ -79,6 +86,7 @@ Feature: Effective synchronization configuration
    {"sources":[],"targets":[{"name":"default","path":"/project/out","adapters":[]}],"tempDir":"","dry":false,"orphans":true,"relations":false,"exclude":["examples","templates"]}
    """
 
+ @category/negative
  Scenario Outline: Configuration rejects invalid public values
   Given configuration
    """
@@ -101,6 +109,7 @@ Feature: Effective synchronization configuration
    | {target: out, settings: {target: other}} | target cannot be defined both |
    | {target: {for_each: wrong}} | for_each must be a mapping |
    | {settings: {validation: wrong}} | validation must be a mapping |
+ @category/happy
  Scenario: Legacy settings target and source syntax are preserved
   Given configuration
    """
@@ -131,6 +140,7 @@ Feature: Effective synchronization configuration
    """
   And the config log has no INFO
 
+ @category/happy
  Scenario Outline: Folders excluded from checks come from settings and from each source
   Given configuration
    """
@@ -152,6 +162,7 @@ Feature: Effective synchronization configuration
    | {sources: [{path: in, exclude_from_checks: null}], settings: {validation: {exclude_from_checks: null}}} | [] | [] |
    | {sources: [{path: in, exclude_from_checks: demo}], settings: {validation: {exclude_from_checks: docs}}} | ["demo"] | ["docs"] |
 
+ @category/boundary
  Scenario: An empty exclusion setting is not replaced by the default
   Given configuration
    """
@@ -166,6 +177,7 @@ Feature: Effective synchronization configuration
    """
   And the config log has no INFO
 
+ @category/negative
  Scenario Outline: A new exclusion key and its deprecated name can't be set together
   Given configuration
    """
@@ -179,6 +191,7 @@ Feature: Effective synchronization configuration
    | {settings: {validation: {exclude_from_checks: [a], rules: {link: {skip_folder: [b]}}}}} | settings.validation.exclude_from_checks cannot be defined both |
    | {sources: [{path: in, exclude_from_checks: [1]}]} | exclude_from_checks entries must be strings |
 
+ @category/happy
  Scenario: Deprecated link-adapter and on_conflict are accepted with a warning and have no effect
   Given configuration
    """
@@ -199,6 +212,7 @@ Feature: Effective synchronization configuration
     ["deprecated-setting","target.default.adapters","deprecated adapter link-adapter, remove it: links are always rewritten"]]
    """
 
+ @category/happy
  Scenario: The removed source name is accepted with a warning and has no effect
   Given configuration
    """

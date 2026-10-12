@@ -1,4 +1,6 @@
+@type/service
 Feature: Select the skills one source contributes
+ @category/happy
  Scenario Outline: Subpaths and tag filters
   Given a source tree
    """
@@ -11,12 +13,13 @@ Feature: Select the skills one source contributes
    | {"a.skill.md":"---\\nname: a\\n---\\n"} |  |  | a | |
    | {"skills/a.skill.md":"---\\nname: a\\n---\\n"} | skills |  | a | |
    | {"a.skill.md":"---\\nname: a\\ntags: [go]\\n---\\n"} |  | go | a | |
-  # Tags are not applied yet (see AGENTS.md): back when the tag filter is.
-  @todo
+  # todo: tags are not applied yet (see AGENTS.md); back when the tag filter is
+  @status/todo
   Examples:
    | files | subpaths | tags | names | error |
    | {"a.skill.md":"---\\nname: a\\ntags: [go]\\n---\\n"} |  | cli |  | |
 
+ @category/happy
  Scenario: Every configured subpath is scanned and results are combined
   Given a source tree
    """
@@ -25,6 +28,7 @@ Feature: Select the skills one source contributes
   When I select from subpaths "a,b" with tags ""
   Then discovered names are "one,two" and discovery error contains ""
 
+ @category/happy
  Scenario: A skill reachable from two overlapping subpaths is only selected once
   Given a source tree
    """
@@ -33,6 +37,7 @@ Feature: Select the skills one source contributes
   When I select from subpaths ".,a" with tags ""
   Then discovered names are "one" and discovery error contains ""
 
+ @category/negative
  Scenario: A structural issue from the catalog surfaces as a discovery error
   Given a source tree
    """
@@ -41,6 +46,7 @@ Feature: Select the skills one source contributes
   When I select from subpaths "." with tags ""
   Then discovered names are "" and discovery error contains "nested-skill"
 
+ @category/error
  Scenario: Canceled discovery stops before acquiring the repository
   Given a source tree
    """
@@ -55,6 +61,7 @@ Feature: Select the skills one source contributes
    """
   And the source provider was not acquired
 
+ @category/error
  Scenario: A source that can't be acquired is one issue, not one per subpath
   Given a source tree
    """
@@ -69,6 +76,7 @@ Feature: Select the skills one source contributes
    """
   And the source provider was acquired 1 time
 
+ @category/negative
  Scenario: A missing subpath is reported and the other subpaths are still selected
   Given a source tree
    """
@@ -81,7 +89,8 @@ Feature: Select the skills one source contributes
    [["missing-subpath","local:repo","missing"]]
    """
 
- @todo
+ # todo: tags are not applied yet (see AGENTS.md); back when the tag filter is (the selector does not parse tags)
+ @status/todo @category/negative
  Scenario: An invalid tag expression is a bug in the caller: the config validator rejects it
   Given a source tree
    """
@@ -91,6 +100,7 @@ Feature: Select the skills one source contributes
   Then selection panics with "invalid tags"
   And the source provider was not acquired
 
+ @category/security
  Scenario: A subpath leading out of the source is a bug in the caller: the config validator rejects it
   Given a source tree
    """
@@ -99,6 +109,7 @@ Feature: Select the skills one source contributes
   When I select from subpaths "../escape" with tags ""
   Then selection panics with "leads out of it"
 
+ @category/negative
  Scenario: Issues found in a skill carry the source they come from
   Given a source tree
    """
@@ -110,7 +121,8 @@ Feature: Select the skills one source contributes
    [["nested-skill","local:repo","b/SKILL.md"]]
    """
 
- @todo
+ # todo: tags are not applied yet (see AGENTS.md); back when the tag filter is
+ @status/todo @category/happy
  Scenario: A skill the tags reject is not loaded into the catalog, nor checked
   Given a source tree
    """

@@ -1,4 +1,6 @@
+@type/tech-check
 Feature: Structured logging levels
+ @category/happy
  Scenario Outline: Debug is opt-in
   When I log with debug "<debug>"
   Then log contains debug "<present>" and info "true"
@@ -7,6 +9,7 @@ Feature: Structured logging levels
    | false | false |
    | true | true |
 
+ @category/happy
  Scenario Outline: Each standard log level has its own color
   When I log at level "<level>" with color "true"
   Then log level "<level>" has ANSI color "<code>"
@@ -17,10 +20,12 @@ Feature: Structured logging levels
    | WARN  | 33   |
    | ERROR | 31   |
 
+ @category/happy
  Scenario: Color can be disabled
   When I log at level "WARN" with color "false"
   Then log contains ANSI "false"
 
+ @category/happy
  Scenario Outline: Color mode accounts for the terminal and NO_COLOR
   When color mode is "<mode>", output terminal is "<terminal>" and NO_COLOR is "<no_color>"
   Then color is enabled "<enabled>"

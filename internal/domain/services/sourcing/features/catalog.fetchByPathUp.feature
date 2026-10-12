@@ -1,3 +1,4 @@
+@type/service
 Feature: SkillCatalog.FetchByPathUp finds the valid skill whose folder holds a path
 
  # FetchByPathUp searches up from the path: it checks the path's own folder
@@ -6,6 +7,7 @@ Feature: SkillCatalog.FetchByPathUp finds the valid skill whose folder holds a p
  # or the path itself when it is a flat "*.skill.md" skill. It never loads
  # neighbour skills and remembers nothing -- that is addPath's job.
 
+ @category/happy
  Scenario Outline: The skill whose folder holds the path is found
   Given a source tree
    """
@@ -25,6 +27,7 @@ Feature: SkillCatalog.FetchByPathUp finds the valid skill whose folder holds a p
    | b.skill.md                     | flat  | b.skill.md                   | flat      |
    | f/f.skill.md                   | plain | f/f.skill.md                 | flat      |
 
+ @category/happy
  Scenario: A skill in the repository folder itself holds every other path
   Given a source tree
    """
@@ -33,6 +36,7 @@ Feature: SkillCatalog.FetchByPathUp finds the valid skill whose folder holds a p
   When I fetch the skill holding "docs/x.md"
   Then the found skill is "root" at "." in format "agent-dir"
 
+ @category/happy
  Scenario: The nearest skill folder wins
   Given a source tree
    """
@@ -41,6 +45,7 @@ Feature: SkillCatalog.FetchByPathUp finds the valid skill whose folder holds a p
   When I fetch the skill holding "a/b/x.md"
   Then the found skill is "inner" at "a/b" in format "agent-dir"
 
+ @category/negative
  Scenario Outline: No skill, or an invalid one, is reported
   Given a source tree
    """
@@ -57,6 +62,7 @@ Feature: SkillCatalog.FetchByPathUp finds the valid skill whose folder holds a p
    | {"a/SKILL.md":"---\\nname: Bad Name\\n---\\n","a/x.md":"hi"} | a/x.md | invalid skill name |
    | {"a/SKILL.md":"---\\nname: one\\n---\\n"} | a/missing.md | not exist |
 
+ @category/happy
  Scenario: Neighbour skills are not loaded and nothing is remembered
   Given a source tree
    """

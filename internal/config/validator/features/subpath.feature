@@ -1,3 +1,4 @@
+@type/domain
 Feature: Every subpath stays inside its source
 
  Scenario Outline: Subpaths of a local source
@@ -11,13 +12,18 @@ Feature: Every subpath stays inside its source
    """
    <issues>
    """
-  Examples:
+  @category/happy
+  Examples: inside the source
    | subpath               | issues |
    | a/b                   | [] |
    | ./a                   | [] |
    | a/../b                | [] |
    | /project/skills       | [] |
    | /project/skills/a     | [] |
+
+  @category/security
+  Examples: leaving the source
+   | subpath               | issues |
    | ../x                  | [["unsafe-subpath","local:/project/skills@master","sources[0].subpath[0]"]] |
    | a/../../x             | [["unsafe-subpath","local:/project/skills@master","sources[0].subpath[0]"]] |
    | a\\\\b                | [["unsafe-subpath","local:/project/skills@master","sources[0].subpath[0]"]] |
@@ -36,12 +42,18 @@ Feature: Every subpath stays inside its source
    """
    <issues>
    """
-  Examples:
+  @category/happy
+  Examples: inside the source
    | subpath | issues |
    | skills  | [] |
+
+  @category/security
+  Examples: leaving the source
+   | subpath | issues |
    | /skills | [["unsafe-subpath","github:https://github.com/o/r.git@master","sources[0].subpath[0]"]] |
    | ../x    | [["unsafe-subpath","github:https://github.com/o/r.git@master","sources[0].subpath[0]"]] |
 
+ @category/security
  Scenario Outline: The message says why the subpath is unsafe
   When I validate configuration
    """

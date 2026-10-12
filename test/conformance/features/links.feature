@@ -1,8 +1,10 @@
+@type/api/cli
 Feature: Links in the written skills lead to the same files at their new places
 
  # "leads to" reads a link the way a markdown viewer does: relative to the
  # folder of the file that holds it.
 
+ @category/happy
  Scenario: Links inside a skill, between skills, wikilinks and anchors keep working
   Given the project
    """
@@ -19,6 +21,7 @@ Feature: Links in the written skills lead to the same files at their new places
   And in "out/a/SKILL.md" the link "top" leads to "out/a/docs/x.md"
   And in "out/a/docs/x.md" the link "back" leads to "out/a/SKILL.md"
 
+ @category/happy
  Scenario: A link to a human-dir or flat skill leads to its SKILL.md
   Given the project
    """
@@ -32,6 +35,7 @@ Feature: Links in the written skills lead to the same files at their new places
   And in "out/a/SKILL.md" the link "f" leads to "out/f/SKILL.md"
 
  # A wikilink path without "./" starts at the source folder.
+ @category/boundary
  Scenario: A link without .md leads to the note, even beside a folder of that name
   Given the project
    """
@@ -43,6 +47,7 @@ Feature: Links in the written skills lead to the same files at their new places
   Then aism succeeds
   And in "out/a/SKILL.md" the link "note" leads to "out/a/x.extend.md"
 
+ @category/happy
  Scenario: A link to a file outside every skill still works in the target
   Given the project
    """
@@ -54,6 +59,7 @@ Feature: Links in the written skills lead to the same files at their new places
   Then aism succeeds
   And in "out/a/SKILL.md" the link "notes" leads to a file containing "shared notes"
 
+ @category/negative
  Scenario: A link to a file that doesn't exist stops sync
   Given the project
    """
@@ -64,6 +70,7 @@ Feature: Links in the written skills lead to the same files at their new places
   Then aism fails
   And the project path "out" does not exist
 
+ @category/negative
  Scenario: A broken link in a file the skill doesn't link to stops sync too
   Given the project
    """
@@ -74,6 +81,7 @@ Feature: Links in the written skills lead to the same files at their new places
   Then aism fails
   And the project path "out" does not exist
 
+ @category/negative
  Scenario: A link to a heading that doesn't exist stops sync
   Given the project
    """
@@ -84,6 +92,7 @@ Feature: Links in the written skills lead to the same files at their new places
   Then aism fails
   And the project path "out" does not exist
 
+ @category/happy
  Scenario: A badge, an image inside a link, is kept
   Given the project
    """
@@ -94,6 +103,7 @@ Feature: Links in the written skills lead to the same files at their new places
   Then aism succeeds
   And the project file "out/a/SKILL.md" contains "[![CI](https://example.com/badge.svg)](https://example.com/ci)"
 
+ @category/security
  Scenario: A link out of the source folder stops sync
   Given the project
    """

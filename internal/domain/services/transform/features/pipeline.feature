@@ -1,5 +1,7 @@
+@type/service
 Feature: A pipeline runs its transformers in order and records each applied one
 
+ @category/happy
  Scenario: Every transformer runs in order and is recorded after the ones applied before
   Given transformers "flat,claude,marker"
   And the catalog was already transformed by "base"
@@ -9,6 +11,7 @@ Feature: A pipeline runs its transformers in order and records each applied one
   And the transformers ran in order "flat,claude,marker"
   And the catalog has applied "base,flat,claude,marker"
 
+ @category/error
  Scenario: The first failing transformer stops the pipeline and isn't recorded
   Given transformers "flat,claude!,marker"
   When I make a pipeline of them
@@ -17,6 +20,7 @@ Feature: A pipeline runs its transformers in order and records each applied one
   And the transformers ran in order "flat,claude"
   And the catalog has applied "flat"
 
+ @category/error
  Scenario: The warnings of every transformer that ran are returned together, a failing one's too
   Given transformers "flat?,claude,marker?!,last?"
   When I make a pipeline of them
@@ -24,6 +28,7 @@ Feature: A pipeline runs its transformers in order and records each applied one
   Then the pipeline fails with "transformer marker: broken"
   And the pipeline warns about "flat,marker"
 
+ @category/error
  Scenario: A canceled run applies nothing
   Given transformers "flat,marker"
   And the run is canceled
@@ -32,6 +37,7 @@ Feature: A pipeline runs its transformers in order and records each applied one
   Then the pipeline fails with "context canceled"
   And the transformers ran in order ""
 
+ @category/negative
  Scenario: A transformer given twice is refused
   Given transformers "flat,marker,flat"
   When I make a pipeline of them

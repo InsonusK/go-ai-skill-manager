@@ -1,7 +1,9 @@
+@type/domain
 Feature: ManagedMarkerTransformer marks every skill folder as written by this tool
 
  # The target is listed as "{skill dir}/{file path}" -> content.
 
+ @category/happy
  Scenario: Every skill gets a marker naming its source, its place there and the transformers before it
   Given a repository "repo" holding
    """
@@ -18,6 +20,7 @@ Feature: ManagedMarkerTransformer marks every skill folder as written by this to
     "f/.ai-skills-managed":"{\n  \"source\": {\n    \"type\": \"local\",\n    \"path\": \"repo\"\n  },\n  \"skill_path\": \"f.skill.md\",\n  \"transformers\": [\n    \"flat\",\n    \"claude-when-to-use\"\n  ],\n  \"version\": \"go-3\"\n}\n"}
    """
 
+ @category/happy
  Scenario: The marker names the commit the skill was taken from, when the source knows it
   Given a repository "repo" holding
    """
@@ -33,6 +36,7 @@ Feature: ManagedMarkerTransformer marks every skill folder as written by this to
     "guide/.ai-skills-managed":"{\n  \"source\": {\n    \"type\": \"local\",\n    \"path\": \"repo\"\n  },\n  \"commit\": \"c0ffee\",\n  \"skill_path\": \"a/guide\",\n  \"transformers\": [\n    \"flat\"\n  ],\n  \"version\": \"go-3\"\n}\n"}
    """
 
+ @category/boundary
  Scenario: A marker the source skill already has is replaced, not doubled
   Given a repository "repo" holding
    """

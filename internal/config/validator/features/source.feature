@@ -1,3 +1,4 @@
+@type/domain
 Feature: Sources of the same repository don't contradict each other
 
  Scenario Outline: Two sources of the same repository
@@ -11,17 +12,23 @@ Feature: Sources of the same repository don't contradict each other
    """
    <issues>
    """
-  Examples:
+  @category/happy
+  Examples: compatible
    | first                                   | second                                   | issues |
    | subpath: [a]                            | subpath: [b]                             | [] |
    | subpath: [a], tags: [go]                | subpath: [a], tags: [cli]                | [] |
+   | subpath: [a], exclude_from_checks: [x]  | subpath: [b], exclude_from_checks: [x]   | [] |
+
+  @category/negative
+  Examples: contradicting
+   | first                                   | second                                   | issues |
    | subpath: [a], tags: [go]                | subpath: [./a], tags: [go]               | [["duplicate-source","local:/project/skills@master","sources[1]"]] |
    | subpath: [a, b]                         | subpath: [b, a]                          | [["duplicate-source","local:/project/skills@master","sources[1]"]] |
    | subpath: [.]                            | tags: []                                 | [["duplicate-source","local:/project/skills@master","sources[1]"]] |
-   | subpath: [a], exclude_from_checks: [x]  | subpath: [b], exclude_from_checks: [x]   | [] |
    | subpath: [a], exclude_from_checks: [x]  | subpath: [b]                             | [["conflicting-exclude","local:/project/skills@master","sources[1].exclude_from_checks"]] |
    | subpath: [a], exclude_from_checks: [x]  | subpath: [a], exclude_from_checks: [y]   | [["duplicate-source","local:/project/skills@master","sources[1]"],["conflicting-exclude","local:/project/skills@master","sources[1].exclude_from_checks"]] |
 
+ @category/happy
  Scenario: Different repositories are never compared
   When I validate configuration
    """
@@ -32,6 +39,7 @@ Feature: Sources of the same repository don't contradict each other
    """
   Then there are no config issues
 
+ @category/negative
  Scenario: Each later source is compared with the first one of its repository
   When I validate configuration
    """

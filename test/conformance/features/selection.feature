@@ -1,5 +1,7 @@
+@type/api/cli
 Feature: What gets selected and what stops sync before writing
 
+ @category/negative
  Scenario: Without add_relations a link to a skill no source selects stops sync
   Given the project
    """
@@ -10,6 +12,7 @@ Feature: What gets selected and what stops sync before writing
   Then aism fails
   And the project path "out" does not exist
 
+ @category/happy
  Scenario: With add_relations the linked skill is written too
   Given the project
    """
@@ -20,6 +23,7 @@ Feature: What gets selected and what stops sync before writing
   Then aism succeeds
   And in "out/a/SKILL.md" the link "b" leads to "out/b/SKILL.md"
 
+ @category/negative
  Scenario: A skill inside another skill's folder stops sync
   Given the project
    """
@@ -30,6 +34,7 @@ Feature: What gets selected and what stops sync before writing
   Then aism fails
   And the project path "out" does not exist
 
+ @category/negative
  Scenario: Two skills of one name stop sync
   Given the project
    """
@@ -40,6 +45,7 @@ Feature: What gets selected and what stops sync before writing
   Then aism fails
   And the project path "out" does not exist
 
+ @category/negative
  Scenario: A skill name that isn't kebab-case stops sync
   Given the project
    """
@@ -50,6 +56,7 @@ Feature: What gets selected and what stops sync before writing
   Then aism fails
   And the project path "out" does not exist
 
+ @category/negative
  Scenario: A subpath that doesn't exist stops sync
   Given the project
    """

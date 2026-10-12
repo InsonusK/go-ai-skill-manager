@@ -1,3 +1,4 @@
+@type/domain
 Feature: LinkFactory collects links from its registered parsers
 
  # Fake parsers report the spans they are told to and parse any raw text
@@ -5,6 +6,7 @@ Feature: LinkFactory collects links from its registered parsers
  # text it received. Start and End are left empty by the fake, so the
  # factory is the only thing that can fill them.
 
+ @category/happy
  Scenario: Links from every registered parser are merged in content order
   Given fake parsers "md,wiki" are registered
   And fake parser "md" reports spans "10-14,0-4"
@@ -22,6 +24,7 @@ Feature: LinkFactory collects links from its registered parsers
    ]
    """
 
+ @category/happy
  Scenario: Each parser parses exactly the text of its own spans
   Given fake parsers "md,wiki" are registered
   And fake parser "md" reports spans "0-4"
@@ -39,6 +42,7 @@ Feature: LinkFactory collects links from its registered parsers
    ["bbbb","cccc"]
    """
 
+ @category/boundary
  Scenario: Touching spans are not a conflict
   Given fake parsers "md,wiki" are registered
   And fake parser "md" reports spans "0-4"
@@ -55,6 +59,7 @@ Feature: LinkFactory collects links from its registered parsers
    ]
    """
 
+ @category/negative
  Scenario: Overlapping spans of different parsers are rejected
   Given fake parsers "md,wiki" are registered
   And fake parser "md" reports spans "0-6"
@@ -67,6 +72,7 @@ Feature: LinkFactory collects links from its registered parsers
   And the search error mentions "aaaabb"
   And the search error mentions "bbbbb"
 
+ @category/negative
  Scenario: A span nested inside another is rejected
   Given fake parsers "md,wiki" are registered
   And fake parser "md" reports spans "0-9"
@@ -77,6 +83,7 @@ Feature: LinkFactory collects links from its registered parsers
    """
   Then searching fails with "link-overlap"
 
+ @category/error
  Scenario: A parse failure is propagated
   Given fake parsers "md" are registered
   And fake parser "md" reports spans "0-4"
@@ -87,6 +94,7 @@ Feature: LinkFactory collects links from its registered parsers
    """
   Then searching fails with "invalid-link"
 
+ @category/negative
  Scenario Outline: Invalid spans are rejected
   Given fake parsers "md" are registered
   And fake parser "md" reports spans "<span>"
@@ -101,6 +109,7 @@ Feature: LinkFactory collects links from its registered parsers
    | 3-1  |
    | 2-5  |
 
+ @category/boundary
  Scenario: A factory without parsers finds nothing
   Given fake parsers "" are registered
   When I search links in
@@ -112,6 +121,7 @@ Feature: LinkFactory collects links from its registered parsers
    []
    """
 
+ @category/happy
  Scenario: Default factory finds markdown and wiki links in content order
   Given the default link factory
   When I search links in
@@ -127,6 +137,7 @@ Feature: LinkFactory collects links from its registered parsers
    ]
    """
 
+ @category/negative
  Scenario: Default factory rejects a wikilink inside a markdown target
   Given the default link factory
   When I search links in
@@ -135,6 +146,7 @@ Feature: LinkFactory collects links from its registered parsers
    """
   Then searching fails with "link-overlap"
 
+ @category/negative
  Scenario: Default factory rejects a linked image as two links over the same text
   Given the default link factory
   When I search links in
@@ -143,6 +155,7 @@ Feature: LinkFactory collects links from its registered parsers
    """
   Then searching fails with "link-overlap"
 
+ @category/happy
  Scenario: Parsers search the content masked by every excluder in turn
   Given fake parsers "md" are registered
   And fake excluder "first" hides spans "2-4"
@@ -160,6 +173,7 @@ Feature: LinkFactory collects links from its registered parsers
    ["01  45  89"]
    """
 
+ @category/boundary
  Scenario: A span touching excluded text is dropped before it is parsed
   Given fake parsers "md" are registered
   And fake parser "md" reports spans "0-5,7-9"
@@ -177,6 +191,7 @@ Feature: LinkFactory collects links from its registered parsers
    ["cc"]
    """
 
+ @category/happy
  Scenario: Default factory skips links in inline code and example fences but keeps external and anchor links
   Given the default link factory
   When I search links in
@@ -192,6 +207,7 @@ Feature: LinkFactory collects links from its registered parsers
    ["[web](https://example.com)","[anchor](#part)","[real](docs/ok.md)"]
    """
 
+ @category/boundary
  Scenario: Default factory keeps a link whose label holds inline code
   Given the default link factory
   When I search links in
@@ -208,6 +224,7 @@ Feature: LinkFactory collects links from its registered parsers
    ]
    """
 
+ @category/boundary
  Scenario Outline: Default factory drops a link with inline code outside its label
   Given the default link factory
   When I search links in

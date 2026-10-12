@@ -1,5 +1,7 @@
+@type/domain
 Feature: InlineCode hides inline code spans
 
+ @category/happy
  Scenario: Single backticks are hidden with their content
   When I search inline code in
    """
@@ -10,6 +12,7 @@ Feature: InlineCode hides inline code spans
    [[2,5]]
    """
 
+ @category/happy
  Scenario: A double-backtick span may hold a single backtick
   When I search inline code in
    """
@@ -20,6 +23,7 @@ Feature: InlineCode hides inline code spans
    [[0,7]]
    """
 
+ @category/happy
  Scenario: A longer backtick run does not close a shorter one
   When I search inline code in
    """
@@ -30,6 +34,7 @@ Feature: InlineCode hides inline code spans
    [[0,7]]
    """
 
+ @category/boundary
  Scenario: An unmatched backtick hides nothing
   When I search inline code in
    """
@@ -40,6 +45,7 @@ Feature: InlineCode hides inline code spans
    []
    """
 
+ @category/happy
  Scenario: Inline code may span lines
   When I search inline code in
    """
@@ -51,6 +57,7 @@ Feature: InlineCode hides inline code spans
    [[0,5]]
    """
 
+ @category/happy
  Scenario: Backticks inside a fenced block are not inline code
   When I search inline code in
    """
@@ -64,6 +71,7 @@ Feature: InlineCode hides inline code spans
    [[19,22]]
    """
 
+ @category/happy
  Scenario: Mask blanks every inline code span and keeps newlines and offsets
   When I mask inline code in
    """

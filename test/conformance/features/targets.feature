@@ -1,5 +1,7 @@
+@type/api/cli
 Feature: What sync does with the folders already in the target
 
+ @category/happy
  Scenario: A dry run writes nothing
   Given the project
    """
@@ -9,6 +11,7 @@ Feature: What sync does with the folders already in the target
   Then aism succeeds
   And the project path "out" does not exist
 
+ @category/happy
  Scenario: A second sync replaces the skill folder: files the skill dropped go away
   Given the project
    """
@@ -24,6 +27,7 @@ Feature: What sync does with the folders already in the target
    ["a/SKILL.md","a/.ai-skills-managed"]
    """
 
+ @category/happy
  Scenario: A skill removed from the sources is removed from the target
   Given the project
    """
@@ -37,6 +41,7 @@ Feature: What sync does with the folders already in the target
   And the project path "out/b" does not exist
   And the project path "out/a/SKILL.md" exists
 
+ @category/negative
  Scenario: A folder the tool didn't write is never replaced
   Given the project
    """
@@ -47,6 +52,7 @@ Feature: What sync does with the folders already in the target
   Then aism fails
   And the project file "out/a/SKILL.md" contains "mine"
 
+ @category/boundary
  Scenario: A folder the tool didn't write, and no skill needs, is left alone
   Given the project
    """

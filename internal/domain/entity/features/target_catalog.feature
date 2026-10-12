@@ -1,3 +1,4 @@
+@type/domain
 Feature: A target skill catalog is a layer over the source skills
 
  # A skill is shown as its fields plus every file (the marker file
@@ -11,6 +12,7 @@ Feature: A target skill catalog is a layer over the source skills
     "f.skill.md":"---\nname: f\n---\n"}
    """
 
+ @category/happy
  Scenario: A new catalog reads nothing and shows every skill as its source
   When I remember how many files were opened
   And I make the base target catalog
@@ -31,6 +33,7 @@ Feature: A target skill catalog is a layer over the source skills
     "Files":{"f.skill.md":"---\nname: f\n---\n"}}
    """
 
+ @category/happy
  Scenario: Changes stay in the target skill, the source skill is untouched
   When I make the base target catalog
   And in the "base" catalog I set the name of "f" to "flat"
@@ -50,6 +53,7 @@ Feature: A target skill catalog is a layer over the source skills
     "Files":{"f.skill.md":"---\nname: f\n---\n"}}
    """
 
+ @category/happy
  Scenario: The document a target skill returns changes nothing until it is set back
   When I make the base target catalog
   And in the "base" catalog I change the description of "guide" to "lost" without setting the document
@@ -59,6 +63,7 @@ Feature: A target skill catalog is a layer over the source skills
     "Files":{"SKILL.md":"---\nname: guide\ndescription: source\n---\n","docs/x.md":"x"}}
    """
 
+ @category/happy
  Scenario: A clone sees the base as it is, and its own changes stay in it
   When I make the base target catalog
   And in the "base" catalog I set the skill dir path of "guide" to "guide"
@@ -83,6 +88,7 @@ Feature: A target skill catalog is a layer over the source skills
     "Files":{"SKILL.md":"---\nname: guide\ndescription: source\n---\n","docs/x.md":"base x"}}
    """
 
+ @category/happy
  Scenario: A file added in a target has no source file and stays in its layer
   When I make the base target catalog
   And in the "base" catalog I add file "base.txt" with "b" to "h"
@@ -105,6 +111,7 @@ Feature: A target skill catalog is a layer over the source skills
     "Files":{"h.skill.md":"---\nname: h\n---\n","y.md":"y"}}
    """
 
+ @category/happy
  Scenario: A file is changed when its layer or one below changed its content
   When I make the base target catalog
   And in the "base" catalog I set the content of file "docs/x.md" of "guide" to "base x"
@@ -115,6 +122,7 @@ Feature: A target skill catalog is a layer over the source skills
   And in the "base" catalog file "y.md" of "h" is unchanged
   And in the "claude" catalog file "SKILL.md" of "guide" is unchanged
 
+ @category/happy
  Scenario: A clone starts with the transformers applied to the base and records its own apart
   When I make the base target catalog
   And the "base" catalog records "flat" as applied
@@ -123,6 +131,7 @@ Feature: A target skill catalog is a layer over the source skills
   Then the "claude" catalog has applied "flat,claude-when-to-use"
   And the "base" catalog has applied "flat"
 
+ @category/happy
  Scenario: The document is always the marker file's current content
   When I make the base target catalog
   And in the "base" catalog I set the content of file "SKILL.md" of "guide" to "---\nname: guide\ndescription: edited\n---\n"
@@ -132,6 +141,7 @@ Feature: A target skill catalog is a layer over the source skills
     "Files":{"SKILL.md":"---\nname: guide\ndescription: edited\n---\n","docs/x.md":"x"}}
    """
 
+ @category/happy
  Scenario: A file keeps its source mode through the layers unless a layer sets one
   Given source file "a/guide/docs/x.md" has mode "755"
   When I make the base target catalog
