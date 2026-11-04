@@ -109,6 +109,19 @@ Feature: FlatTransformer lays each skill out as {name}/SKILL.md and rewrites lin
    {"h/SKILL.md":"---\nname: h\n---\n","h/examples/app.md":"[m](../h.skill.md) [gone](./gone.md)\n","h/data.txt":"[m](./h.skill.md)\n"}
    """
 
+ Scenario: A link in a tagged code block keeps as written, the same link outside it is rewritten
+  Given a repository "repo" holding
+   """
+   {"h.skill/h.skill.md":"---\nname: h\n---\n[m](./h.skill.md)\n```go\nx := [m](./h.skill.md)\n```\n```\n[m](./h.skill.md)\n```\n"}
+   """
+  And skills at "." of "repo" are loaded
+  When I make the target catalog
+  And I flatten the target catalog
+  Then the target holds
+   """
+   {"h/SKILL.md":"---\nname: h\n---\n[m](./SKILL.md)\n```go\nx := [m](./h.skill.md)\n```\n```\n[m](./SKILL.md)\n```\n"}
+   """
+
  Scenario: A file changed before flattening is a bug: the flat transformer runs first
   Given a repository "repo" holding
    """
