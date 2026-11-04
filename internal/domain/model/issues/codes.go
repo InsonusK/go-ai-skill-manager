@@ -46,6 +46,7 @@ const (
 	CodeLinkTarget        Code = "link-target"
 	CodeSharedFileLinks   Code = "shared-file-links"
 	CodeSharedFileUnread  Code = "shared-file-unread"
+	CodeCodeBlockLink     Code = "code-block-link"
 
 	CodeUnmanagedTarget Code = "unmanaged-target"
 
@@ -85,6 +86,7 @@ var ids = map[Code]string{
 	CodeLinkTarget:        "E310",
 	CodeSharedFileLinks:   "W311",
 	CodeSharedFileUnread:  "W312",
+	CodeCodeBlockLink:     "W313",
 
 	CodeUnmanagedTarget: "E401",
 

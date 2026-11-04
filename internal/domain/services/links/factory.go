@@ -14,7 +14,9 @@ import (
 // LinkFactory finds every link in a file's content: it first lets each
 // registered ContentExcluder blank the text no link is searched in, then
 // runs each registered LinkParser over the result, and makes sure no two
-// parsers claim the same text. It is the entity.LinkSearcher that
+// parsers claim the same text. A link found in a tagged fenced code block
+// ("```go", not hidden by an excluder) gets that block's language as its
+// CodeBlock. It is the entity.LinkSearcher that
 // entity.File.Links calls through (via entity.SetDefaultLinkSearcher).
 type LinkFactory struct {
 	excluders []content_excluder.ContentExcluder
@@ -83,6 +85,7 @@ func (f *LinkFactory) SearchLinks(content string) ([]model.ParsedLink, error) {
 			out = append(out, l)
 		}
 	}
+	markCodeBlocks(out, content_excluder.TaggedCodeBlocks(content))
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Start < out[j].Start })
 	// Sorted by Start, any overlap shows up between neighbours.
 	for i := 1; i < len(out); i++ {
@@ -93,6 +96,20 @@ func (f *LinkFactory) SearchLinks(content string) ([]model.ParsedLink, error) {
 		}
 	}
 	return out, nil
+}
+
+// markCodeBlocks sets the CodeBlock of every link that shares any byte with
+// one of blocks.
+func markCodeBlocks(links []model.ParsedLink, blocks []content_excluder.CodeBlock) {
+	for i := range links {
+		s := link_parser.Span{Start: links[i].Start, End: links[i].End}
+		for _, b := range blocks {
+			if s.Start < b.End && s.End > b.Start {
+				links[i].CodeBlock = b.Info
+				break
+			}
+		}
+	}
 }
 
 // intersecting returns the spans that share any byte with s.

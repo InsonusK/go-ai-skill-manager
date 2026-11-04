@@ -126,7 +126,8 @@
   записи может остановиться после части target. Тесты — фейковые
   `StateReader`/`PlanWriter` в памяти (`handler/test/sync_steps_test.go`).
 - `services/links`: `parser` (markdown, wikilink → `ParsedLink`),
-  `content_excluder` (inline code, example-fence; `CodeFences`),
+  `content_excluder` (inline code, example-fence; `CodeFences`,
+  `TaggedCodeBlocks`),
   `LinkFactory` (реализует `entity.LinkSearcher`).
 - `services/validator`: см. раздел ниже.
 
@@ -172,6 +173,14 @@
   ещё: она внутри кода, код пересекает её границу или стоит в цели
   (`LinkFactory.SearchLinks`: цель исходной и замаскированной ссылки
   должна совпасть).
+- Fenced-блоки кода (решение пользователя): ```` ```example ```` скрыт
+  целиком; блок без пометки (```` ``` ````) — ссылки в нём обычные
+  (проверяются, ошибки — ошибки); блок с любой другой пометкой
+  (```` ```go ````, `~~~yaml title=x`) — ссылки находятся, получают
+  `CodeBlock` (первое слово info string), `LinkValidator` их **не
+  проверяет**, а выдаёт на каждую warning `code-block-link` (W313; в коде
+  бывает текст, похожий на ссылку: `Repository[tables.ItemRow](db)`),
+  `FlatTransformer` оставляет их как записаны.
 - Путь «как записан» — `Link.WrittenPath` (поле и метод `Path` не могут
   называться одинаково).
 - `Link.Path`: resolver нужен только для `SkillRelative`. Web-ссылка →

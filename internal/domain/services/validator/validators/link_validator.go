@@ -21,7 +21,10 @@ import (
 // AddRelations off it is an "unselected-skill" issue, with it on the skill
 // is loaded and then checked the same way. Web links are not checked, nor
 // are files the catalog excludes from checks (catalog.IsExcludedFromChecks,
-// e.g. "examples" holding a packaged example app).
+// e.g. "examples" holding a packaged example app). A link in a tagged
+// fenced code block ("```go") is not checked either: it may be code that
+// only looks like a link, so it is a "code-block-link" warning, and sync
+// copies it as written.
 type LinkValidator struct{}
 
 // CatalogValidator is a validator of the skills loaded in a SkillCatalog.
@@ -70,6 +73,10 @@ func (v LinkValidator) validateSkill(ctx context.Context, catalog *sourcing.Skil
 		}
 		for _, link := range links {
 			if link.External {
+				continue
+			}
+			if link.CodeBlock != "" {
+				problems = append(problems, skillIssue(skill, issues.SkillIssue{Code: issues.CodeCodeBlockLink, File: rel, Link: link.Raw, Message: fmt.Sprintf("link in a ```%s code block is not checked and is copied as written; tag the block \"example\" if it is no link", link.CodeBlock)}))
 				continue
 			}
 			if err := validateLink(ctx, catalog, link, shared); err != nil {

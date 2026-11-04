@@ -16,9 +16,9 @@ Feature: LinkFactory collects links from its registered parsers
   Then the searched links are
    """
    [
-    {"Start":0,"End":4,"Text":"","Path":"aaaa","Fragment":"","Format":"md","Image":false},
-    {"Start":5,"End":9,"Text":"","Path":"bbbb","Fragment":"","Format":"wiki","Image":false},
-    {"Start":10,"End":14,"Text":"","Path":"cccc","Fragment":"","Format":"md","Image":false}
+    {"Start":0,"End":4,"Text":"","Path":"aaaa","Fragment":"","Format":"md","Image":false,"CodeBlock":""},
+    {"Start":5,"End":9,"Text":"","Path":"bbbb","Fragment":"","Format":"wiki","Image":false,"CodeBlock":""},
+    {"Start":10,"End":14,"Text":"","Path":"cccc","Fragment":"","Format":"md","Image":false,"CodeBlock":""}
    ]
    """
 
@@ -50,8 +50,8 @@ Feature: LinkFactory collects links from its registered parsers
   Then the searched links are
    """
    [
-    {"Start":0,"End":4,"Text":"","Path":"aaaa","Fragment":"","Format":"md","Image":false},
-    {"Start":4,"End":8,"Text":"","Path":"bbbb","Fragment":"","Format":"wiki","Image":false}
+    {"Start":0,"End":4,"Text":"","Path":"aaaa","Fragment":"","Format":"md","Image":false,"CodeBlock":""},
+    {"Start":4,"End":8,"Text":"","Path":"bbbb","Fragment":"","Format":"wiki","Image":false,"CodeBlock":""}
    ]
    """
 
@@ -121,9 +121,9 @@ Feature: LinkFactory collects links from its registered parsers
   Then the searched links are
    """
    [
-    {"Start":0,"End":20,"Text":"notes.skill","Path":"notes.skill","Fragment":"#part","Format":"wikilink","Image":false},
-    {"Start":21,"End":46,"Text":"Guide","Path":"./guide.md","Fragment":"#intro","Format":"markdown","Image":false},
-    {"Start":47,"End":70,"Text":"image","Path":"images/a.png","Fragment":"","Format":"wikilink","Image":true}
+    {"Start":0,"End":20,"Text":"notes.skill","Path":"notes.skill","Fragment":"#part","Format":"wikilink","Image":false,"CodeBlock":""},
+    {"Start":21,"End":46,"Text":"Guide","Path":"./guide.md","Fragment":"#intro","Format":"markdown","Image":false,"CodeBlock":""},
+    {"Start":47,"End":70,"Text":"image","Path":"images/a.png","Fragment":"","Format":"wikilink","Image":true,"CodeBlock":""}
    ]
    """
 
@@ -192,6 +192,34 @@ Feature: LinkFactory collects links from its registered parsers
    ["[web](https://example.com)","[anchor](#part)","[real](docs/ok.md)"]
    """
 
+ Scenario: Default factory marks a link in a tagged code block with its language
+  Given the default link factory
+  When I search links in
+   """
+   [out](a.md)
+   ```go title=x
+   r := Repository[tables.ItemRow](db)
+   ```
+   ```
+   [plain](b.md)
+   ```
+   ~~~yaml
+   [[c.md]]
+   ~~~
+   ```example
+   [sample](bad)
+   ```
+   """
+  Then the searched links are
+   """
+   [
+    {"Start":0,"End":11,"Text":"out","Path":"a.md","Fragment":"","Format":"markdown","Image":false,"CodeBlock":""},
+    {"Start":41,"End":61,"Text":"tables.ItemRow","Path":"db","Fragment":"","Format":"markdown","Image":false,"CodeBlock":"go"},
+    {"Start":70,"End":83,"Text":"plain","Path":"b.md","Fragment":"","Format":"markdown","Image":false,"CodeBlock":""},
+    {"Start":96,"End":104,"Text":"c.md","Path":"c.md","Fragment":"","Format":"wikilink","Image":false,"CodeBlock":"yaml"}
+   ]
+   """
+
  Scenario: Default factory keeps a link whose label holds inline code
   Given the default link factory
   When I search links in
@@ -201,10 +229,10 @@ Feature: LinkFactory collects links from its registered parsers
   Then the searched links are
    """
    [
-    {"Start":0,"End":25,"Text":"`page`","Path":"a/page.html","Fragment":"#top","Format":"markdown","Image":false},
-    {"Start":26,"End":51,"Text":"the `page` file","Path":"a/b.md","Fragment":"","Format":"markdown","Image":false},
-    {"Start":52,"End":66,"Text":"`c`","Path":"a/c.md","Fragment":"","Format":"wikilink","Image":false},
-    {"Start":67,"End":82,"Text":"`i`","Path":"a/i.png","Fragment":"","Format":"markdown","Image":true}
+    {"Start":0,"End":25,"Text":"`page`","Path":"a/page.html","Fragment":"#top","Format":"markdown","Image":false,"CodeBlock":""},
+    {"Start":26,"End":51,"Text":"the `page` file","Path":"a/b.md","Fragment":"","Format":"markdown","Image":false,"CodeBlock":""},
+    {"Start":52,"End":66,"Text":"`c`","Path":"a/c.md","Fragment":"","Format":"wikilink","Image":false,"CodeBlock":""},
+    {"Start":67,"End":82,"Text":"`i`","Path":"a/i.png","Fragment":"","Format":"markdown","Image":true,"CodeBlock":""}
    ]
    """
 

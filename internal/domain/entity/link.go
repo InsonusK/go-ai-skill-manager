@@ -54,6 +54,10 @@ type Link struct {
 	// External is true when WrittenPath is a web resource (http://,
 	// https://, mailto:, ftp://, file://), not a path in the repository.
 	External bool
+	// CodeBlock is the language of the tagged fenced code block the link
+	// is written in, e.g. "go"; empty outside one (see
+	// model.ParsedLink.CodeBlock).
+	CodeBlock string
 
 	file   *File
 	target *model.PathInRepo // cached by resolveTarget
@@ -87,6 +91,7 @@ func MakeLink(file *File, parsed model.ParsedLink) (*Link, error) {
 		Format:      parsed.Format,
 		Image:       parsed.Image,
 		External:    external,
+		CodeBlock:   parsed.CodeBlock,
 		file:        file,
 	}, nil
 }

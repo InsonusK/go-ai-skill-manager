@@ -7,7 +7,8 @@ import (
 // ExampleFence hides fenced code blocks tagged "example" ("```example" or
 // "~~~example"), fence lines included, up to the end of content when the
 // block is unclosed. Untagged and other-tagged blocks are not hidden
-// (Python compatibility).
+// (Python compatibility); LinkFactory marks the links in other-tagged ones
+// (see TaggedCodeBlocks).
 type ExampleFence struct{}
 
 var _ ContentExcluder = ExampleFence{}
@@ -15,7 +16,7 @@ var _ ContentExcluder = ExampleFence{}
 func (ExampleFence) Search(content string) []link_parser.Span {
 	out := []link_parser.Span{}
 	for _, f := range fenced(content) {
-		if f.example {
+		if f.info == "example" {
 			out = append(out, link_parser.Span{Start: f.start, End: f.end})
 		}
 	}
