@@ -119,6 +119,24 @@ Feature: LinkValidator checks that every link leads to an existing file and anch
    ["[one](../one/SKILL.md)","[[two/SKILL.md|two]]","[web](https://example.com)"]
    """
 
+ Scenario: A link in a tagged code block is only a warning, not checked; in an untagged one it is checked
+  Given a source "repo" holding
+   """
+   {"one/SKILL.md":"---\nname: one\n---\n```go\nr := postgres.NewRepository[tables.ItemRow](db)\n```\n~~~yaml title=x\n[[missing]]\n~~~\n```\n[a](./gone.md)\n```\n```example\n[b](./gone.md)\n```\n"}
+   """
+  And skills at "one" of source "repo" are selected
+  When I validate links
+  Then the issues are
+   """
+   [
+    ["code-block-link","local:repo","one","one","SKILL.md","[tables.ItemRow](db)"],
+    ["code-block-link","local:repo","one","one","SKILL.md","[[missing]]"],
+    ["missing-link-target","local:repo","one","one","SKILL.md","[a](./gone.md)"]
+   ]
+   """
+  And issue 1 message contains "```go code block"
+  And issue 2 message contains "```yaml code block"
+
  Scenario: A link to an invalid skill reports why that skill cannot be loaded
   Given a source "repo" holding
    """

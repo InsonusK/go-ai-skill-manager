@@ -15,4 +15,9 @@ type ParsedLink struct {
 	Format string
 	// Image is true for the "!" image form of the link.
 	Image bool
+	// CodeBlock is the info string's first word of the tagged fenced code
+	// block the link is written in, e.g. "go" for "```go"; empty outside
+	// such a block. A link in code may be code that only looks like a link,
+	// e.g. "Repository[tables.ItemRow](db)".
+	CodeBlock string
 }

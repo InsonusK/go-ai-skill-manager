@@ -22,7 +22,9 @@ import (
 // skill in a folder named after it, its marker file -- whatever its format
 // -- as SKILL.md, its other files where they are in its folder. Links in
 // markdown files are rewritten to lead to the same files at their new
-// places, and wikilinks become markdown links.
+// places, and wikilinks become markdown links. A link in a tagged fenced
+// code block ("```go") stays as written: it may be code, and it was not
+// checked (LinkValidator warns about it).
 //
 // A link to a shared file of the source that no skill holds (e.g. a
 // catalog's registry entry) gets that file copied into the first skill, in
@@ -132,10 +134,10 @@ type edit struct {
 
 // rewrite returns the edit that makes link l, written in a file that moves
 // into folder fromDir, lead to its target's new place; false when l stays
-// as written (a web link, a markdown link to the same place, or one with
-// only an anchor).
+// as written (a web link, a link in a tagged code block, a markdown link
+// to the same place, or one with only an anchor).
 func rewrite(ctx context.Context, l *entity.Link, fromDir string, places *places, s *entity.TargetSkill) (edit, bool, error) {
-	if l.External {
+	if l.External || l.CodeBlock != "" {
 		return edit{}, false, nil
 	}
 	target := l.Fragment
